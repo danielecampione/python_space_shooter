@@ -116,7 +116,8 @@ class SpaceShooterGame:
         # Variabili di gioco
         self.ship_speed = 10
         self.bullet_speed = 15
-        self.asteroid_speed = 3
+        self.asteroid_base_speed = 2  # Velocità base degli asteroidi
+        self.asteroid_max_speed = 8   # Velocità massima degli asteroidi
         self.score = 0
         self.game_over = False
         self.lives = 3
@@ -266,12 +267,14 @@ class SpaceShooterGame:
                 self.canvas.delete(bullet["id"])
                 self.bullets.remove(bullet)
 
-    # Funzione per generare asteroidi
+    # Funzione per generare asteroidi con velocità crescente
     def spawn_asteroids(self):
-        if random.randint(1, 50) == 1:
+        difficulty_factor = 1 + self.score / 20  # Incrementa difficoltà con il punteggio
+        spawn_chance = max(1, int(50 / difficulty_factor))
+        if random.randint(1, spawn_chance) == 1:
             x = random.randint(0, 750)
             size = random.randint(20, 50)
-            speed = random.uniform(2, 5)
+            speed = min(self.asteroid_base_speed * difficulty_factor, self.asteroid_max_speed)
             direction = random.choice(["straight", "diagonal"])
             asteroid = self.canvas.create_oval(
                 x, 0, x + size, size, fill="gray", outline="darkgray", tags="asteroid"
