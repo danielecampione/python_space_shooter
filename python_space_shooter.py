@@ -20,6 +20,7 @@ class SpaceShooterGame:
         self.asteroid_speed = 5
         self.score = 0
         self.game_over = False
+        self.lives = 3  # Barra di vita
 
         # Crea la navicella (forma di astronave)
         self.ship = self.create_spaceship(375, 550)
@@ -35,13 +36,19 @@ class SpaceShooterGame:
             10, 10, text=f"Score: {self.score}", font=("Arial", 14), fill="white", anchor="nw"
         )
 
+        # Etichetta per le vite
+        self.lives_label = self.canvas.create_text(
+            790, 10, text=f"Lives: {self.lives}", font=("Arial", 14), fill="white", anchor="ne"
+        )
+
         # Sfondo stellato
         self.stars = []
         for _ in range(100):
             x = random.randint(0, 800)
             y = random.randint(0, 600)
             size = random.choice([1, 2])
-            star = self.canvas.create_oval(x, y, x + size, y + size, fill="white", tags="star")
+            speed = random.uniform(1, 3)  # Velocità casuale per ogni stella
+            star = {"id": self.canvas.create_oval(x, y, x + size, y + size, fill="white"), "speed": speed}
             self.stars.append(star)
 
         # Associazione dei tasti
@@ -135,7 +142,7 @@ class SpaceShooterGame:
             size = random.randint(5, 20)
             circle = self.canvas.create_oval(
                 x, y, x + size, y + size, fill="gray", outline="darkgray", tags="asteroid"
-            )  # Cambiamo il colore in grigio
+            )
             asteroid.append(circle)
             x += random.randint(-10, 10)
             y += random.randint(-10, 10)
@@ -184,7 +191,12 @@ class SpaceShooterGame:
                 if not piece_coords:  # Ignora i pezzi senza coordinate valide
                     continue
                 if self.is_collision(ship_coords, piece_coords):
-                    self.game_over_screen()
+                    self.lives -= 1
+                    self.update_lives()
+                    if self.lives <= 0:
+                        self.game_over_screen()
+                    else:
+                        self.destroy_asteroid(asteroid)
                     return  # Esci dalla funzione dopo il Game Over
 
     # Funzione per eliminare completamente un asteroide
@@ -249,15 +261,18 @@ class SpaceShooterGame:
         # Applica una lieve sfocatura all'ombra
         image = image.filter(ImageFilter.GaussianBlur(radius=2))
 
-        # Ruota l'immagine
+        # Animazione di scala e rotazione
+        scale_factor = 1.0
         angle = 0
         while angle <= 360:
             rotated_image = image.rotate(angle, expand=True)
-            photo = ImageTk.PhotoImage(rotated_image)
+            resized_image = rotated_image.resize((int(800 * scale_factor), int(600 * scale_factor)))
+            photo = ImageTk.PhotoImage(resized_image)
             self.canvas.create_image(400, 300, image=photo)
             self.root.update()
             self.root.after(50)
-            angle += 10
+            angle += 5
+            scale_factor -= 0.005  # Riduci gradualmente la scala
 
         # Riavvia il gioco dopo l'animazione
         self.root.after(1000, self.restart_game)
@@ -266,6 +281,7 @@ class SpaceShooterGame:
     def restart_game(self):
         self.canvas.delete("all")  # Cancella tutto
         self.score = 0
+        self.lives = 3
         self.game_over = False
 
         # Ricrea la navicella
@@ -280,13 +296,19 @@ class SpaceShooterGame:
             10, 10, text=f"Score: {self.score}", font=("Arial", 14), fill="white", anchor="nw"
         )
 
+        # Ricrea l'etichetta delle vite
+        self.lives_label = self.canvas.create_text(
+            790, 10, text=f"Lives: {self.lives}", font=("Arial", 14), fill="white", anchor="ne"
+        )
+
         # Ricrea lo sfondo stellato
         self.stars = []
         for _ in range(100):
             x = random.randint(0, 800)
             y = random.randint(0, 600)
             size = random.choice([1, 2])
-            star = self.canvas.create_oval(x, y, x + size, y + size, fill="white", tags="star")
+            speed = random.uniform(1, 3)  # Velocità casuale per ogni stella
+            star = {"id": self.canvas.create_oval(x, y, x + size, y + size, fill="white"), "speed": speed}
             self.stars.append(star)
 
         # Riavvia il ciclo principale del gioco
@@ -295,16 +317,23 @@ class SpaceShooterGame:
     # Funzione per aggiornare il punteggio
     def update_score(self):
         self.canvas.itemconfig(self.score_label, text=f"Score: {self.score}")
+        # Aumenta la velocità degli asteroidi man mano che il punteggio cresce
+        if self.score % 10 == 0:
+            self.asteroid_speed = min(self.asteroid_speed + 1, 15)
+
+    # Funzione per aggiornare le vite
+    def update_lives(self):
+        self.canvas.itemconfig(self.lives_label, text=f"Lives: {self.lives}")
 
     # Funzione per aggiornare lo sfondo stellato
     def update_stars(self):
         for star in self.stars[:]:  # Itera su una copia della lista delle stelle
-            if not self.canvas.find_withtag(star):  # Ignora le stelle eliminate
+            if not self.canvas.find_withtag(star["id"]):  # Ignora le stelle eliminate
                 continue
-            self.canvas.move(star, 0, 2)
-            coords = self.canvas.coords(star)
+            self.canvas.move(star["id"], 0, star["speed"])
+            coords = self.canvas.coords(star["id"])
             if coords and coords[3] > 600:  # Verifica se le coordinate sono valide
-                self.canvas.move(star, 0, -600)
+                self.canvas.move(star["id"], 0, -600 - coords[3])
 
 def main():
     root = tk.Tk()
