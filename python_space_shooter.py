@@ -1,5 +1,7 @@
 import tkinter as tk
+from PIL import Image, ImageDraw, ImageTk, ImageFont, ImageFilter
 import random
+import math
 
 class SpaceShooterGame:
     def __init__(self, root):
@@ -132,8 +134,8 @@ class SpaceShooterGame:
         for _ in range(random.randint(5, 10)):  # Numero casuale di cerchi
             size = random.randint(5, 20)
             circle = self.canvas.create_oval(
-                x, y, x + size, y + size, fill="#8B4513", outline="#5C3317", tags="asteroid"
-            )
+                x, y, x + size, y + size, fill="gray", outline="darkgray", tags="asteroid"
+            )  # Cambiamo il colore in grigio
             asteroid.append(circle)
             x += random.randint(-10, 10)
             y += random.randint(-10, 10)
@@ -212,15 +214,53 @@ class SpaceShooterGame:
     # Funzione per mostrare lo schermo di Game Over
     def game_over_screen(self):
         self.game_over = True
-        # Cancella tutto tranne le stelle per evitare errori
-        for item in self.canvas.find_all():
-            tags = self.canvas.gettags(item)
-            if "star" not in tags:  # Conserva solo le stelle
-                self.canvas.delete(item)
-        self.canvas.create_text(
-            400, 300, text="GAME OVER", font=("Arial", 50), fill="red", anchor="center"
-        )
-        self.root.after(1000, self.restart_game)  # Riavvia dopo 1 secondo
+        self.canvas.delete("all")  # Cancella tutto
+
+        # Mostra la scritta "GAME OVER" con effetto 3D
+        self.show_game_over_3d()
+
+    # Funzione per creare un testo 3D
+    def show_game_over_3d(self):
+        # Crea un'immagine con il testo "GAME OVER"
+        image = Image.new("RGBA", (800, 600), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
+        font_size = 70
+        text = "GAME OVER"
+
+        # Definisci il font usando ImageFont di Pillow
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)  # Usa un font truetype
+        except IOError:
+            font = ImageFont.load_default()  # Usa il font predefinito se arial.ttf non è disponibile
+
+        # Disegna il testo con ombra
+        shadow_color = (50, 50, 50, 255)
+        main_color = (255, 0, 0, 255)
+        offset = 5
+        x, y = 400, 300
+
+        # Effetto 3D con ombra
+        for i in range(10):
+            draw.text((x + offset + i, y + offset + i), text, font=font, fill=shadow_color)
+
+        # Disegna il testo principale
+        draw.text((x, y), text, font=font, fill=main_color)
+
+        # Applica una lieve sfocatura all'ombra
+        image = image.filter(ImageFilter.GaussianBlur(radius=2))
+
+        # Ruota l'immagine
+        angle = 0
+        while angle <= 360:
+            rotated_image = image.rotate(angle, expand=True)
+            photo = ImageTk.PhotoImage(rotated_image)
+            self.canvas.create_image(400, 300, image=photo)
+            self.root.update()
+            self.root.after(50)
+            angle += 10
+
+        # Riavvia il gioco dopo l'animazione
+        self.root.after(1000, self.restart_game)
 
     # Funzione per riavviare il gioco
     def restart_game(self):
