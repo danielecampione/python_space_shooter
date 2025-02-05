@@ -422,30 +422,30 @@ class SpaceShooterGame:
             self.canvas.delete(power_up["id"])
         self.power_ups.clear()
 
-        # Mostra la scritta "GAME OVER" con effetto 3D senza ciclo per i fotogrammi
+        # Mostra la scritta "GAME OVER" con effetto 3D
         self.show_game_over_3d()
 
-    # Funzione modificata per creare un testo 3D con animazione senza ciclo
+    # Funzione per creare un testo 3D con animazione breve
     def show_game_over_3d(self):
         # Crea un'immagine con il testo "GAME OVER"
-        self.image = Image.new("RGBA", (800, 600), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(self.image)
+        image = Image.new("RGBA", (800, 600), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(image)
         font_size = 70
-        self.text = "GAME OVER"
+        text = "GAME OVER"
 
         # Definisci il font usando ImageFont di Pillow
         try:
-            self.font = ImageFont.truetype("arial.ttf", font_size)
+            font = ImageFont.truetype("arial.ttf", font_size)
         except IOError:
-            self.font = ImageFont.load_default()
+            font = ImageFont.load_default()
 
         # Calcola le dimensioni del testo
-        bbox = self.font.getbbox(self.text)
-        self.text_width = bbox[2] - bbox[0]
-        self.text_height = bbox[3] - bbox[1]
+        bbox = font.getbbox(text)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
 
-        self.x = 400 - self.text_width / 2
-        self.y = 300 - self.text_height / 2
+        x = 400 - text_width / 2
+        y = 300 - text_height / 2
 
         # Disegna il testo con ombra per effetto 3D
         shadow_color = (50, 50, 50, 255)
@@ -453,58 +453,45 @@ class SpaceShooterGame:
         offset = 5
 
         for i in range(10):
-            draw.text((self.x + offset + i, self.y + offset + i), self.text, font=self.font, fill=shadow_color)
+            draw.text((x + offset + i, y + offset + i), text, font=font, fill=shadow_color)
 
-        draw.text((self.x, self.y), self.text, font=self.font, fill=main_color)
+        draw.text((x, y), text, font=font, fill=main_color)
 
         # Applica una lieve sfocatura all'ombra
-        self.image = self.image.filter(ImageFilter.GaussianBlur(radius=2))
+        image = image.filter(ImageFilter.GaussianBlur(radius=2))
 
-        # Inizializza i parametri dell'animazione
-        self.current_frame = 0
-        self.total_frames = 20  # Numero totale di fotogrammi
-        self.duration = 1000  # Durata totale dell'animazione in millisecondi
-        self.delay = self.duration // self.total_frames  # Ritardo tra i fotogrammi
-        self.images = []
+        # Animazione di ridimensionamento e movimento
+        frames = 20  # Numero di fotogrammi
+        duration = 1000  # Durata totale dell'animazione in millisecondi
+        delay = duration // frames  # Ritardo tra i fotogrammi
 
-        # Avvia l'animazione
-        self.animate_game_over()
+        images = []
 
-    # Funzione ricorsiva per l'animazione senza ciclo
-    def animate_game_over(self):
-        if self.current_frame >= self.total_frames:
-            # Animazione terminata, mostra l'immagine finale e torna al menù principale
+        for i in range(frames):
+            # Calcola il fattore di scala e la posizione per l'animazione
+            scale_factor = 1 + 0.5 * (frames - i) / frames  # Scala da 1.5 a 1.0
+            dx = -200 * (frames - i) / frames  # Sposta da sinistra verso il centro
+
+            # Applica la scala
+            resized_image = image.resize(
+                (int(800 * scale_factor), int(600 * scale_factor)),
+                RESAMPLE_FILTER
+            )
+            photo = ImageTk.PhotoImage(resized_image)
+            images.append(photo)  # Conserva l'immagine per evitare il garbage collection
+
+            # Aggiorna il canvas
             self.canvas.delete("game_over_image")
-            final_image = ImageTk.PhotoImage(self.image)
-            self.canvas.create_image(400, 300, image=final_image, tags="game_over_image")
-            # Mantieni una referenza all'immagine
-            self.images.append(final_image)
-            # Riavvia il gioco dopo l'animazione
-            self.root.after(1000, self.show_main_menu)
-            return
+            self.canvas.create_image(400 + dx, 300, image=photo, tags="game_over_image")
+            self.canvas.update()
+            self.root.after(delay)
 
-        # Calcola il fattore di scala e la posizione per l'animazione
-        scale_factor = 1 + 0.5 * (self.total_frames - self.current_frame) / self.total_frames  # Scala da 1.5 a 1.0
-        dx = -200 * (self.total_frames - self.current_frame) / self.total_frames  # Sposta da sinistra verso il centro
-
-        # Applica la scala
-        resized_image = self.image.resize(
-            (int(800 * scale_factor), int(600 * scale_factor)),
-            RESAMPLE_FILTER
-        )
-        photo = ImageTk.PhotoImage(resized_image)
-        self.images.append(photo)  # Conserva l'immagine per evitare il garbage collection
-
-        # Aggiorna il canvas
+        # Mostra l'immagine finale
         self.canvas.delete("game_over_image")
-        self.canvas.create_image(400 + dx, 300, image=photo, tags="game_over_image")
-        self.canvas.update()
+        self.canvas.create_image(400, 300, image=images[-1], tags="game_over_image")
 
-        # Incrementa il frame corrente
-        self.current_frame += 1
-
-        # Chiama la funzione dopo un ritardo
-        self.root.after(self.delay, self.animate_game_over)
+        # Riavvia il gioco dopo l'animazione
+        self.root.after(1000, self.show_main_menu)
 
     # Funzione per riavviare il gioco
     def restart_game(self):
