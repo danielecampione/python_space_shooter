@@ -1,6 +1,7 @@
 import tkinter as tk
 from PIL import Image, ImageDraw, ImageTk, ImageFont, ImageFilter
 import random
+import math
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -20,16 +21,30 @@ class SpaceShooterGame:
         self.game_running = False
 
         # Canvas per il gioco
-        self.canvas = tk.Canvas(self.root, width=800, height=600, bg="black")
+        self.canvas = tk.Canvas(self.root, width=800, height=600)
         self.canvas.pack()
+
+        # Disegna sfondo con gradiente
+        self.draw_gradient_background()
 
         # Mostra il menù principale
         self.show_main_menu()
+
+    # Funzione per disegnare un gradiente verticale più scuro
+    def draw_gradient_background(self):
+        self.canvas.delete("gradient")
+        for i in range(256):
+            blue_value = int(i * 0.3)  # Riduci l'intensità del blu
+            color = f"#0000{format(blue_value, '02x')}"
+            self.canvas.create_rectangle(0, i * 2.35, 800, (i + 1) * 2.35, fill=color, outline="", tags="gradient")
+        # Porta in primo piano gli elementi del gioco dopo aver disegnato lo sfondo
+        self.canvas.tag_lower("gradient")
 
     # Funzione per mostrare il menù principale
     def show_main_menu(self):
         # Cancella tutto
         self.canvas.delete("all")
+        self.draw_gradient_background()
 
         # Titolo del gioco
         self.canvas.create_text(
@@ -60,6 +75,7 @@ class SpaceShooterGame:
     # Funzione per mostrare le istruzioni
     def show_instructions(self):
         self.canvas.delete("all")
+        self.draw_gradient_background()
 
         instructions_text = (
             "Benvenuto in Space Shooter!\n\n"
@@ -90,6 +106,7 @@ class SpaceShooterGame:
     def start_game(self):
         self.game_running = True
         self.canvas.delete("all")
+        self.draw_gradient_background()
 
         # Rimuovi tutti i widget (bottoni)
         for widget in self.root.winfo_children():
@@ -110,10 +127,11 @@ class SpaceShooterGame:
         # Crea la navicella
         self.ship = self.create_spaceship(375, 550)
 
-        # Liste per proiettili, asteroidi e power-up
+        # Liste per proiettili, asteroidi, power-up e particelle
         self.bullets = []
         self.asteroids = []
         self.power_ups = []
+        self.particles = []
 
         # Etichette per il punteggio e le vite
         self.score_label = self.canvas.create_text(
@@ -125,18 +143,19 @@ class SpaceShooterGame:
             fill="white", anchor="ne"
         )
 
-        # Sfondo stellato
+        # Sfondo stellato con stelle scintillanti
         self.stars = []
         for _ in range(100):
             x = random.randint(0, 800)
             y = random.randint(0, 600)
             size = random.choice([1, 2])
-            speed = random.uniform(1, 3)
             star = {
                 "id": self.canvas.create_oval(
-                    x, y, x + size, y + size, fill="white"
+                    x, y, x + size, y + size, fill="white", outline=""
                 ),
-                "speed": speed
+                "speed": random.uniform(1, 3),
+                "brightness": random.uniform(0.5, 1.0),
+                "delta": random.uniform(-0.02, 0.02)
             }
             self.stars.append(star)
 
@@ -148,7 +167,7 @@ class SpaceShooterGame:
         # Avvio del ciclo del gioco
         self.game_loop()
 
-    # Funzione per creare la navicella con effetto fiammata
+    # Funzione per creare la navicella con effetto glow
     def create_spaceship(self, x, y):
         points = [
             x + 25, y - 25,  # Punta superiore
@@ -156,21 +175,23 @@ class SpaceShooterGame:
             x + 50, y + 10   # Base destra
         ]
         ship = self.canvas.create_polygon(
-            points, fill="blue", outline="white", tags="ship"
+            points, fill="blue", outline="cyan", width=2, tags="ship"
         )
         return ship
 
-    # Funzione per aggiungere l'effetto fiammata
+    # Funzione per aggiungere l'effetto fiammata con gradienti
     def add_rocket_effect(self, x, y):
-        flame = self.canvas.create_polygon(
-            x + 20, y + 10,
-            x + 15, y + 25,
-            x + 35, y + 25,
-            x + 30, y + 10,
-            fill="orange", outline="yellow"
-        )
-        self.canvas.tag_lower(flame, self.ship)
-        self.canvas.after(100, lambda: self.canvas.delete(flame))
+        flame_colors = ["yellow", "orange", "red"]
+        for i, color in enumerate(flame_colors):
+            flame = self.canvas.create_polygon(
+                x + 20, y + 10 + i * 5,
+                x + 17 - i * 2, y + 25 + i * 5,
+                x + 33 + i * 2, y + 25 + i * 5,
+                x + 30, y + 10 + i * 5,
+                fill=color, outline="", tags="effect"
+            )
+            self.canvas.tag_lower(flame, self.ship)
+            self.canvas.after(100, lambda f=flame: self.canvas.delete(f))
 
     # Movimento della navicella a sinistra
     def move_ship_left(self, event):
@@ -188,7 +209,7 @@ class SpaceShooterGame:
                 self.canvas.move(self.ship, self.ship_speed, 0)
                 self.add_rocket_effect(coords[0], coords[3])
 
-    # Funzione per sparare un proiettile
+    # Funzione per sparare un proiettile con scia luminosa
     def shoot_bullet(self, event):
         if not self.game_over:
             coords = self.canvas.coords(self.ship)
@@ -213,6 +234,13 @@ class SpaceShooterGame:
                 )
                 self.bullets.append({"id": bullet, "dx": 0})
 
+            # Aggiungi scia luminosa
+            trail = self.canvas.create_line(
+                center_x, top_y, center_x, top_y + 10,
+                fill="white", width=2, tags="trail"
+            )
+            self.canvas.after(100, lambda: self.canvas.delete(trail))
+
     # Ciclo principale del gioco
     def game_loop(self):
         if self.game_over:
@@ -223,6 +251,7 @@ class SpaceShooterGame:
         self.move_asteroids()
         self.spawn_power_up()
         self.move_power_ups()
+        self.move_particles()
         self.check_collisions()
         self.update_stars()
         self.update_power_up()
@@ -285,6 +314,32 @@ class SpaceShooterGame:
                 self.canvas.delete(power_up["id"])
                 self.power_ups.remove(power_up)
 
+    # Funzione per creare un effetto particellare
+    def create_explosion(self, x, y):
+        for _ in range(20):
+            angle = random.uniform(0, 2 * math.pi)
+            speed = random.uniform(1, 5)
+            dx = math.cos(angle) * speed
+            dy = math.sin(angle) * speed
+            particle = {
+                "id": self.canvas.create_oval(
+                    x, y, x + 3, y + 3, fill="orange", outline=""
+                ),
+                "dx": dx,
+                "dy": dy,
+                "life": random.randint(20, 50)
+            }
+            self.particles.append(particle)
+
+    # Funzione per muovere le particelle
+    def move_particles(self):
+        for particle in self.particles[:]:
+            self.canvas.move(particle["id"], particle["dx"], particle["dy"])
+            particle["life"] -= 1
+            if particle["life"] <= 0:
+                self.canvas.delete(particle["id"])
+                self.particles.remove(particle)
+
     # Funzione per controllare le collisioni
     def check_collisions(self):
         if self.game_over:
@@ -298,17 +353,16 @@ class SpaceShooterGame:
         for bullet in self.bullets[:]:
             bullet_coords = self.canvas.bbox(bullet["id"])
             if not bullet_coords or len(bullet_coords) < 4:
-                continue  # Salta questo proiettile se le coordinate non sono valide
+                continue
             for asteroid in self.asteroids[:]:
                 asteroid_coords = self.canvas.coords(asteroid["id"])
                 if not asteroid_coords or len(asteroid_coords) < 4:
-                    continue  # Salta questo asteroide se le coordinate non sono valide
+                    continue
                 if self.check_overlap(bullet_coords, asteroid_coords):
                     self.canvas.delete(bullet["id"])
                     if bullet in self.bullets:
                         self.bullets.remove(bullet)
-                    self.canvas.delete(asteroid["id"])
-                    self.asteroids.remove(asteroid)
+                    self.destroy_asteroid(asteroid)
                     self.score += 1
                     self.update_score()
                     break
@@ -317,23 +371,24 @@ class SpaceShooterGame:
         for asteroid in self.asteroids[:]:
             asteroid_coords = self.canvas.coords(asteroid["id"])
             if not asteroid_coords or len(asteroid_coords) < 4:
-                continue  # Salta questo asteroide se le coordinate non sono valide
+                continue
             if self.check_overlap(ship_coords, asteroid_coords):
                 self.canvas.delete(asteroid["id"])
                 if asteroid in self.asteroids:
                     self.asteroids.remove(asteroid)
                 self.lives -= 1
                 self.update_lives()
+                # Lampeggia la navicella senza congelare il gioco
                 self.flash_ship()
                 if self.lives <= 0:
                     self.game_over_screen()
-                    return  # Esce dalla funzione per evitare ulteriori elaborazioni
+                    return
 
         # Collisioni navicella - power-up
         for power_up in self.power_ups[:]:
             power_up_coords = self.canvas.coords(power_up["id"])
             if not power_up_coords or len(power_up_coords) < 4:
-                continue  # Salta questo power-up se le coordinate non sono valide
+                continue
             if self.check_overlap(ship_coords, power_up_coords):
                 self.canvas.delete(power_up["id"])
                 if power_up in self.power_ups:
@@ -349,23 +404,25 @@ class SpaceShooterGame:
                     bbox1[3] < bbox2[1] or
                     bbox1[1] > bbox2[3])
 
-    # Effetto lampeggiante della navicella
+    # Funzione per lampeggiare la navicella senza congelare il gioco
     def flash_ship(self):
-        original_color = "blue"
-        flash_colors = ["orange", "red"]
-        duration = 500
-        steps = 5
-        step_duration = duration // steps
+        if self.game_over:
+            return
 
-        for _ in range(steps):
-            for color in flash_colors:
-                if not self.game_over:
-                    self.canvas.itemconfig(self.ship, fill=color)
-                    self.root.update()
-                    self.root.after(step_duration // len(flash_colors))
+        colors = ["orange", "red", "blue"]
+        self.flash_index = 0
+        self.flash_steps = 10
 
-        if not self.game_over:
-            self.canvas.itemconfig(self.ship, fill=original_color)
+        def flash():
+            if self.flash_index < self.flash_steps and not self.game_over:
+                color = colors[self.flash_index % len(colors)]
+                self.canvas.itemconfig(self.ship, fill=color)
+                self.flash_index += 1
+                self.root.after(100, flash)
+            else:
+                self.canvas.itemconfig(self.ship, fill="blue")
+
+        flash()
 
     # Aggiornamento del punteggio
     def update_score(self):
@@ -375,9 +432,17 @@ class SpaceShooterGame:
     def update_lives(self):
         self.canvas.itemconfig(self.lives_label, text=f"Vite: {self.lives}")
 
-    # Aggiornamento delle stelle
+    # Funzione per aggiornare le stelle con effetto scintillio
     def update_stars(self):
         for star in self.stars:
+            # Aggiorna la luminosità
+            star["brightness"] += star["delta"]
+            if star["brightness"] <= 0.5 or star["brightness"] >= 1.0:
+                star["delta"] *= -1
+            brightness = int(255 * star["brightness"])
+            color = f"#{brightness:02x}{brightness:02x}{brightness:02x}"
+            self.canvas.itemconfig(star["id"], fill=color)
+            # Muovi la stella
             self.canvas.move(star["id"], 0, star["speed"])
             coords = self.canvas.coords(star["id"])
             if not coords or len(coords) < 4 or coords[3] > 600:
@@ -407,7 +472,17 @@ class SpaceShooterGame:
         self.power_up_active = False
         self.power_up_type = None
 
-    # Funzione per mostrare lo schermo di Game Over
+    # Funzione per distruggere un asteroide con effetto esplosione
+    def destroy_asteroid(self, asteroid):
+        coords = self.canvas.coords(asteroid["id"])
+        x = (coords[0] + coords[2]) / 2
+        y = (coords[1] + coords[3]) / 2
+        self.canvas.delete(asteroid["id"])
+        if asteroid in self.asteroids:
+            self.asteroids.remove(asteroid)
+        self.create_explosion(x, y)
+
+    # Funzione per mostrare lo schermo di Game Over con animazione 3D
     def game_over_screen(self):
         self.game_over = True
 
@@ -421,6 +496,9 @@ class SpaceShooterGame:
         for power_up in self.power_ups:
             self.canvas.delete(power_up["id"])
         self.power_ups.clear()
+        for particle in self.particles:
+            self.canvas.delete(particle["id"])
+        self.particles.clear()
 
         # Mostra la scritta "GAME OVER" con effetto 3D
         self.show_game_over_3d()
