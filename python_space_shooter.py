@@ -897,7 +897,7 @@ class SpaceShooterGame:
         self.canvas.delete("game_over_image")
         self.canvas.create_image(400, 300, image=images[-1], tags="game_over_image")
         # Salva l'id dell'after per poterlo annullare se necessario
-        self.game_over_after_id = self.root.after(3000 if win else 1000, self.back_to_main_menu)
+        self.game_over_after_id = self.root.after(1050 if win else 1000, self.back_to_main_menu)
 
 def main():
     root = tk.Tk()
