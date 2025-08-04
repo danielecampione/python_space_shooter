@@ -5,6 +5,7 @@ import math
 from spaceship import Spaceship
 from projectile import Projectile, DiagonalProjectile
 from asteroid import Asteroid, AsteroidManager
+from starfield import Star, StarField
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -372,20 +373,7 @@ class SpaceShooterGame:
         )
 
         # Sfondo stellato con stelle scintillanti
-        self.stars = []
-        for _ in range(100):
-            x = random.randint(0, 800)
-            y = random.randint(0, 600)
-            size = random.choice([1, 2])
-            star = {
-                "id": self.canvas.create_oval(
-                    x, y, x + size, y + size, fill="white", outline=""
-                ),
-                "speed": random.uniform(1, 3),
-                "brightness": random.uniform(0.5, 1.0),
-                "delta": random.uniform(-0.02, 0.02)
-            }
-            self.stars.append(star)
+        self.starfield = StarField(self.canvas, num_stars=100)
 
         # Associazione dei controlli
         self.bind_game_controls()
@@ -490,7 +478,7 @@ class SpaceShooterGame:
         self.move_power_ups()
         self.move_particles()
         self.check_collisions()
-        self.update_stars()
+        self.starfield.update_all_stars()
         self.update_power_up()
         self.game_loop_after_id = self.canvas.after(30, self.game_loop)
 
@@ -640,23 +628,7 @@ class SpaceShooterGame:
     def update_lives(self):
         self.canvas.itemconfig(self.lives_label, text=f"Vite: {self.lives}")
 
-    # Funzione per aggiornare le stelle con effetto scintillio
-    def update_stars(self):
-        for star in self.stars:
-            # Aggiorna la luminosità
-            star["brightness"] += star["delta"]
-            if star["brightness"] <= 0.5 or star["brightness"] >= 1.0:
-                star["delta"] *= -1
-            brightness = int(255 * star["brightness"])
-            color = f"#{brightness:02x}{brightness:02x}{brightness:02x}"
-            self.canvas.itemconfig(star["id"], fill=color)
-            # Muovi la stella
-            self.canvas.move(star["id"], 0, star["speed"])
-            coords = self.canvas.coords(star["id"])
-            if not coords or len(coords) < 4 or coords[3] > 600:
-                x = random.randint(0, 800)
-                y = -5
-                self.canvas.coords(star["id"], x, y, x + 2, y + 2)
+
 
     # Funzione per gestire i power-up attivi
     def update_power_up(self):
