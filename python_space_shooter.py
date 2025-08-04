@@ -4,6 +4,7 @@ import random
 import math
 from spaceship import Spaceship
 from projectile import Projectile, DiagonalProjectile
+from asteroid import Asteroid, AsteroidManager
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -343,8 +344,6 @@ class SpaceShooterGame:
         # Variabili di gioco
         self.ship_speed = 10
         self.bullet_speed = 15
-        self.asteroid_base_speed = 2  # Velocità base degli asteroidi
-        self.asteroid_max_speed = 8   # Velocità massima degli asteroidi
         self.score = 0
         self.lives = 3
         self.power_up_active = False
@@ -354,9 +353,11 @@ class SpaceShooterGame:
         # Crea la navicella
         self.ship = Spaceship(self.canvas, 375, 550, self.ship_speed)
 
-        # Liste per proiettili, asteroidi, power-up e particelle
+        # Manager per gli asteroidi
+        self.asteroid_manager = AsteroidManager(self.canvas, base_speed=2, max_speed=8)
+
+        # Liste per proiettili, power-up e particelle
         self.bullets = []
-        self.asteroids = []
         self.power_ups = []
         self.particles = []
 
@@ -483,8 +484,8 @@ class SpaceShooterGame:
         if self.game_over or self.game_paused:
             return  # Interrompe il ciclo se il gioco è finito o in pausa
         self.move_bullets()
-        self.spawn_asteroids()
-        self.move_asteroids()
+        self.asteroid_manager.spawn_asteroid(self.score)
+        self.asteroid_manager.move_all_asteroids()
         self.spawn_power_up()
         self.move_power_ups()
         self.move_particles()
@@ -502,32 +503,7 @@ class SpaceShooterGame:
                 self.canvas.delete(bullet["id"])
                 self.bullets.remove(bullet)
 
-    # Funzione per generare asteroidi con velocità crescente
-    def spawn_asteroids(self):
-        difficulty_factor = 1 + self.score / 20  # Incrementa difficoltà con il punteggio
-        spawn_chance = max(1, int(50 / difficulty_factor))
-        if random.randint(1, spawn_chance) == 1:
-            x = random.randint(0, 750)
-            size = random.randint(20, 50)
-            speed = min(self.asteroid_base_speed * difficulty_factor, self.asteroid_max_speed)
-            direction = random.choice(["straight", "diagonal"])
-            asteroid = self.canvas.create_oval(
-                x, 0, x + size, size, fill="gray", outline="darkgray", tags="asteroid"
-            )
-            self.asteroids.append({"id": asteroid, "size": size, "speed": speed, "direction": direction})
 
-    # Funzione per muovere gli asteroidi
-    def move_asteroids(self):
-        for asteroid in self.asteroids[:]:
-            dx = 0
-            dy = asteroid["speed"]
-            if asteroid["direction"] == "diagonal":
-                dx = random.choice([-1, 1]) * asteroid["speed"] / 2
-            self.canvas.move(asteroid["id"], dx, dy)
-            coords = self.canvas.coords(asteroid["id"])
-            if not coords or len(coords) < 4 or coords[3] > 600 or coords[2] < 0 or coords[0] > 800:
-                self.canvas.delete(asteroid["id"])
-                self.asteroids.remove(asteroid)
 
     # Funzione per generare power-up
     def spawn_power_up(self):
@@ -598,8 +574,8 @@ class SpaceShooterGame:
             bullet_coords = self.canvas.bbox(bullet["id"])
             if not bullet_coords or len(bullet_coords) < 4:
                 continue
-            for asteroid in self.asteroids[:]:
-                asteroid_coords = self.canvas.coords(asteroid["id"])
+            for asteroid in self.asteroid_manager.get_asteroids()[:]:
+                asteroid_coords = asteroid.get_coords()
                 if not asteroid_coords or len(asteroid_coords) < 4:
                     continue
                 if self.check_overlap(bullet_coords, asteroid_coords):
@@ -614,14 +590,13 @@ class SpaceShooterGame:
                         self.game_over_screen(win=True)
                     break
         # Collisioni navicella - asteroidi
-        for asteroid in self.asteroids[:]:
-            asteroid_coords = self.canvas.coords(asteroid["id"])
+        for asteroid in self.asteroid_manager.get_asteroids()[:]:
+            asteroid_coords = asteroid.get_coords()
             if not asteroid_coords or len(asteroid_coords) < 4:
                 continue
             if self.check_overlap(ship_coords, asteroid_coords):
-                self.canvas.delete(asteroid["id"])
-                if asteroid in self.asteroids:
-                    self.asteroids.remove(asteroid)
+                asteroid.destroy()
+                self.asteroid_manager.remove_asteroid(asteroid)
                 self.lives -= 1
                 self.update_lives()
                 # Lampeggia la navicella senza congelare il gioco
@@ -763,13 +738,7 @@ class SpaceShooterGame:
 
     # Funzione per distruggere un asteroide con effetto esplosione
     def destroy_asteroid(self, asteroid):
-        coords = self.canvas.coords(asteroid["id"])
-        x = (coords[0] + coords[2]) / 2
-        y = (coords[1] + coords[3]) / 2
-        size = asteroid["size"]
-        self.canvas.delete(asteroid["id"])
-        if asteroid in self.asteroids:
-            self.asteroids.remove(asteroid)
+        x, y, size = self.asteroid_manager.destroy_asteroid(asteroid)
         # Calcola il numero di particelle in base alla dimensione dell'asteroide
         num_particles = int(size * 0.8)  # Numero proporzionale alla dimensione
         self.create_explosion(x, y, num_particles)
@@ -811,9 +780,7 @@ class SpaceShooterGame:
         for bullet in self.bullets:
             self.canvas.delete(bullet["id"])
         self.bullets.clear()
-        for asteroid in self.asteroids:
-            self.canvas.delete(asteroid["id"])
-        self.asteroids.clear()
+        self.asteroid_manager.clear_all_asteroids()
         for power_up in self.power_ups:
             self.canvas.delete(power_up["id"])
         self.power_ups.clear()
