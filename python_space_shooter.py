@@ -2,6 +2,8 @@ import tkinter as tk
 from PIL import Image, ImageDraw, ImageTk, ImageFont, ImageFilter
 import random
 import math
+from spaceship import Spaceship
+from projectile import Projectile, DiagonalProjectile
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -9,41 +11,6 @@ try:
     RESAMPLE_FILTER = Resampling.LANCZOS
 except ImportError:
     RESAMPLE_FILTER = Image.LANCZOS  # Per le versioni precedenti
-
-# Classe base per i proiettili
-class Projectile:
-    def __init__(self, canvas, x, y, dx=0, speed=15):
-        self.canvas = canvas
-        self.x = x
-        self.y = y
-        self.dx = dx  # Movimento orizzontale
-        self.speed = speed
-        self.id = self.create_visual()
-    
-    def create_visual(self):
-        """Crea la rappresentazione visiva del proiettile"""
-        return self.canvas.create_line(
-            self.x, self.y, self.x, self.y - 20,
-            fill="yellow", width=3, tags="bullet"
-        )
-    
-    def get_id(self):
-        """Restituisce l'ID del proiettile"""
-        return self.id
-
-# Classe per proiettili diagonali (doppio fuoco)
-class DiagonalProjectile(Projectile):
-    def __init__(self, canvas, x, y, angle_offset, speed=15):
-        self.angle_offset = angle_offset
-        super().__init__(canvas, x, y, angle_offset / 10, speed)
-    
-    def create_visual(self):
-        """Crea la rappresentazione visiva del proiettile diagonale"""
-        return self.canvas.create_line(
-            self.x, self.y,
-            self.x + self.angle_offset, self.y - 20,
-            fill="yellow", width=3, tags="bullet"
-        )
 
 class SpaceShooterGame:
     def __init__(self, root):
@@ -385,7 +352,7 @@ class SpaceShooterGame:
         self.power_up_timer = 0
 
         # Crea la navicella
-        self.ship = self.create_spaceship(375, 550)
+        self.ship = Spaceship(self.canvas, 375, 550, self.ship_speed)
 
         # Liste per proiettili, asteroidi, power-up e particelle
         self.bullets = []
@@ -447,66 +414,33 @@ class SpaceShooterGame:
         # Tasto Esc per tornare al menù
         self.root.bind("<Escape>", self.back_to_main_menu)
 
-    # Funzione per creare la navicella con effetto glow
-    def create_spaceship(self, x, y):
-        points = [
-            x + 25, y - 25,  # Punta superiore
-            x, y + 10,       # Base sinistra
-            x + 50, y + 10   # Base destra
-        ]
-        ship = self.canvas.create_polygon(
-            points, fill="blue", outline="cyan", width=2, tags="ship"
-        )
-        return ship
-
     # Funzione per aggiungere l'effetto fiammata con gradienti
-    def add_rocket_effect(self, x, y):
+    def add_rocket_effect(self):
         if self.game_paused:
             return
-        flame_colors = ["yellow", "orange", "red"]
-        for i, color in enumerate(flame_colors):
-            flame = self.canvas.create_polygon(
-                x + 20, y + 10 + i * 5,
-                x + 17 - i * 2, y + 25 + i * 5,
-                x + 33 + i * 2, y + 25 + i * 5,
-                x + 30, y + 10 + i * 5,
-                fill=color, outline="", tags="effect"
-            )
-            self.canvas.tag_lower(flame, self.ship)
-            self.canvas.after(100, lambda f=flame: self.canvas.delete(f))
+        self.ship.add_rocket_effect()
 
     # Movimento della navicella a sinistra
     def move_ship_left(self, event):
         if not self.game_over and not self.game_paused:
-            coords = self.canvas.coords(self.ship)
-            if coords and coords[0] > 0:
-                self.canvas.move(self.ship, -self.ship_speed, 0)
-                self.add_rocket_effect(coords[0], coords[3])
+            if self.ship.move_left():
+                self.add_rocket_effect()
 
     # Movimento della navicella a destra
     def move_ship_right(self, event):
         if not self.game_over and not self.game_paused:
-            coords = self.canvas.coords(self.ship)
-            if coords and coords[4] < 800:
-                self.canvas.move(self.ship, self.ship_speed, 0)
-                self.add_rocket_effect(coords[0], coords[3])
+            if self.ship.move_right():
+                self.add_rocket_effect()
 
     # Movimento della navicella con il mouse
     def move_ship_with_mouse(self, event):
         if not self.game_over and not self.game_paused:
-            ship_coords = self.canvas.coords(self.ship)
+            ship_coords = self.ship.get_coords()
             if ship_coords:
                 ship_width = ship_coords[4] - ship_coords[0]
                 new_x = event.x - ship_width / 2
-                # Limita il movimento ai bordi dello schermo
-                if new_x < 0:
-                    new_x = 0
-                elif new_x + ship_width > 800:
-                    new_x = 800 - ship_width
-                # Sposta la navicella
-                delta_x = new_x - ship_coords[0]
-                self.canvas.move(self.ship, delta_x, 0)
-                self.add_rocket_effect(ship_coords[0], ship_coords[3])
+                if self.ship.move_to_x(new_x):
+                    self.add_rocket_effect()
 
     # Funzione per sparare con il mouse in modalità mouse attiva
     def mouse_shoot(self, event):
@@ -516,9 +450,8 @@ class SpaceShooterGame:
     # Funzione per sparare un proiettile con scia luminosa
     def shoot_bullet(self, event):
         if not self.game_over and not self.game_paused:
-            coords = self.canvas.coords(self.ship)
-            center_x = (coords[0] + coords[4]) / 2
-            top_y = coords[1]
+            center_x = self.ship.get_center_x()
+            top_y = self.ship.get_top_y()
             if self.power_up_active and self.power_up_type == "double_fire":
                 # Spara due proiettili diagonali
                 angle_offsets = [-10, 10]
@@ -657,7 +590,7 @@ class SpaceShooterGame:
     def check_collisions(self):
         if self.game_over:
             return  # Esce dalla funzione se il gioco è finito
-        ship_coords = self.canvas.bbox(self.ship)
+        ship_coords = self.ship.get_bbox()
         if not ship_coords or len(ship_coords) < 4:
             return  # Esce se le coordinate della navicella non sono valide
         # Collisioni proiettili - asteroidi
@@ -721,24 +654,8 @@ class SpaceShooterGame:
     def flash_ship(self):
         if self.game_over:
             return
-        colors = ["orange", "red", "blue"]
-        self.flash_index = 0
-        self.flash_steps = 10
-
-        def flash():
-            if self.flash_index < self.flash_steps and not self.game_over:
-                if not self.game_paused:  # Controllo pausa aggiunto
-                    color = colors[self.flash_index % len(colors)]
-                    self.canvas.itemconfig(self.ship, fill=color)
-                    self.flash_index += 1
-                    self.root.after(100, flash)
-                else:
-                    # Se in pausa, riprova dopo un breve delay
-                    self.root.after(50, flash)
-            else:
-                self.canvas.itemconfig(self.ship, fill="blue")
-
-        flash()
+        if not self.game_paused:
+            self.ship.flash()
 
     # Aggiornamento del punteggio
     def update_score(self):
@@ -889,7 +806,8 @@ class SpaceShooterGame:
 
     # Funzione per eliminare gli oggetti di gioco
     def clear_game_objects(self):
-        self.canvas.delete("ship")
+        if hasattr(self, 'ship') and self.ship:
+            self.ship.delete()
         for bullet in self.bullets:
             self.canvas.delete(bullet["id"])
         self.bullets.clear()
@@ -903,8 +821,10 @@ class SpaceShooterGame:
             self.canvas.delete(particle["id"])
         self.particles.clear()
         self.canvas.delete("effect", "trail", "power_up_text")
-        self.canvas.delete(self.score_label)
-        self.canvas.delete(self.lives_label)
+        if hasattr(self, 'score_label'):
+            self.canvas.delete(self.score_label)
+        if hasattr(self, 'lives_label'):
+            self.canvas.delete(self.lives_label)
 
     # Funzione per rimuovere le associazioni dei tasti di gioco
     def unbind_game_controls(self):
