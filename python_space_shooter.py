@@ -5,8 +5,9 @@ import math
 from spaceship import Spaceship
 from projectile import Projectile, DiagonalProjectile
 from asteroid import Asteroid, AsteroidManager
-from starfield import Star, StarField
-from powerup import Powerup, ExtraLifePowerup, DoubleFirePowerup, PowerupManager
+from star_field import StarField
+from powerup_manager import PowerupManager
+from rocket_flame_manager_single import RocketFlameManager
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -358,9 +359,10 @@ class SpaceShooterGame:
         # Manager per gli asteroidi
         self.asteroid_manager = AsteroidManager(self.canvas, base_speed=2, max_speed=8)
 
-        # Liste per proiettili e particelle, manager per power-up
+        # Liste per proiettili e particelle, manager per power-up e fiammate
         self.bullets = []
         self.powerup_manager = PowerupManager(self.canvas)
+        self.rocket_flame_manager = RocketFlameManager(self.canvas)
         self.particles = []
 
         # Etichette per il punteggio e le vite
@@ -408,7 +410,8 @@ class SpaceShooterGame:
     def add_rocket_effect(self):
         if self.game_paused:
             return
-        self.ship.add_rocket_effect()
+        ship_x, ship_y = self.ship.get_position()
+        self.rocket_flame_manager.add_flame(ship_x, ship_y + 30)
 
     # Movimento della navicella a sinistra
     def move_ship_left(self, event):
@@ -452,21 +455,9 @@ class SpaceShooterGame:
                 # Spara un proiettile dritto
                 projectile = Projectile(self.canvas, center_x, top_y, 0, self.bullet_speed)
                 self.bullets.append({"id": projectile.get_id(), "dx": 0})
-            # Aggiungi scia luminosa con controllo pausa
-            trail = self.canvas.create_line(
-                center_x, top_y, center_x, top_y + 10,
-                fill="white", width=2, tags="trail"
-            )
-            self.delete_trail_after_delay(trail, 100)
 
-    # Nuova funzione helper per gestire la cancellazione delle scie con pausa
-    def delete_trail_after_delay(self, trail, delay):
-        def delete_if_not_paused():
-            if not self.game_paused:
-                self.canvas.delete(trail)
-            else:
-                self.root.after(50, delete_if_not_paused)
-        self.root.after(delay, delete_if_not_paused)
+
+
 
     # Ciclo principale del gioco
     def game_loop(self):
@@ -479,7 +470,7 @@ class SpaceShooterGame:
         self.powerup_manager.move_all_powerups()
         self.move_particles()
         self.check_collisions()
-        self.starfield.update_all_stars()
+        self.starfield.update_stars()
         self.update_power_up()
         self.game_loop_after_id = self.canvas.after(30, self.game_loop)
 
@@ -580,7 +571,7 @@ class SpaceShooterGame:
                 continue
             if self.check_overlap(ship_coords, powerup_coords):
                 self.powerup_manager.remove_powerup(powerup)
-                self.show_power_up_text(powerup.type)
+                self.show_power_up_text(powerup.get_type())
                 powerup.activate(self)
 
     # Funzione per verificare sovrapposizione
@@ -725,10 +716,11 @@ class SpaceShooterGame:
         self.bullets.clear()
         self.asteroid_manager.clear_all_asteroids()
         self.powerup_manager.clear_all_powerups()
+        self.rocket_flame_manager.clear_all_flames()
         for particle in self.particles:
             self.canvas.delete(particle["id"])
         self.particles.clear()
-        self.canvas.delete("effect", "trail", "power_up_text")
+        self.canvas.delete("power_up_text")
         if hasattr(self, 'score_label'):
             self.canvas.delete(self.score_label)
         if hasattr(self, 'lives_label'):
