@@ -573,7 +573,6 @@ class SpaceShooterGame:
                 continue
             if self.check_overlap(ship_coords, powerup_coords):
                 self.powerup_manager.remove_powerup(powerup)
-                self.show_power_up_text(powerup.get_type())
                 powerup.activate(self)
 
     # Funzione per verificare sovrapposizione
