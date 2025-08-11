@@ -13,7 +13,7 @@ Command to execute in the terminal to install the Pillow library:
 pip install pillow-11.0.0-cp313-cp313-win_amd64.whl
 ```
 
-![Png](https://i.ibb.co/SwLFR9kG/screenshot.png)
+![Png](https://i.ibb.co/GQjJTFQ7/Immagine-2025-08-12-000139.png)
 
 ## deepin (linux, Debian)
 
