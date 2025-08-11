@@ -31,6 +31,10 @@ class SpaceShooterGame:
         self.control_with_mouse = False  # Di default, il controllo è con la tastiera
         self.game_over = False  # Stato per il game over
         self.game_paused = False  # Stato per la pausa
+        
+        # Opzioni grafiche
+        self.graphics_detail = "low"  # "low" o "high"
+        self.loaded_images = {}  # Cache per le immagini caricate
 
         # Variabili per tenere traccia degli eventi after
         self.game_loop_after_id = None
@@ -44,7 +48,7 @@ class SpaceShooterGame:
         self.draw_gradient_background()
 
         # Variabili per il menù
-        self.menu_options = ["Inizia Partita", "Istruzioni", "Comandi", "Esci"]
+        self.menu_options = ["Inizia Partita", "Istruzioni", "Comandi", "Opzioni grafiche", "Esci"]
         self.selected_option = 0  # Indice dell'opzione selezionata
 
         # Mostra il menù principale
@@ -153,6 +157,8 @@ class SpaceShooterGame:
             self.show_instructions()
         elif option == "Comandi":
             self.show_commands_menu()
+        elif option == "Opzioni grafiche":
+            self.show_graphics_options()
         elif option == "Esci":
             self.root.destroy()
 
@@ -285,6 +291,97 @@ class SpaceShooterGame:
         else:
             self.remove_checkmark()
 
+    # Funzione per mostrare le opzioni grafiche
+    def show_graphics_options(self):
+        self.canvas.delete("all")
+        self.draw_gradient_background()
+
+        # Titolo
+        self.canvas.create_text(
+            400, 150, text="Opzioni Grafiche", font=("Arial", 36, "bold"), fill="white"
+        )
+
+        # Opzioni di dettaglio
+        detail_options = ["Molto basso", "Alto"]
+        detail_y_start = 250
+        detail_y_gap = 60
+
+        for index, option in enumerate(detail_options):
+            color = "yellow" if (index == 0 and self.graphics_detail == "low") or (index == 1 and self.graphics_detail == "high") else "white"
+            self.canvas.create_text(
+                400, detail_y_start + index * detail_y_gap, text=option, font=("Arial", 24),
+                fill=color, tags=f"detail_option_{index}"
+            )
+            
+            # Associa eventi di clic
+            self.canvas.tag_bind(f"detail_option_{index}", "<Button-1>", lambda e, idx=index: self.set_graphics_detail(idx))
+            self.canvas.tag_bind(f"detail_option_{index}", "<Enter>", lambda e, idx=index: self.canvas.itemconfig(f"detail_option_{idx}", fill="cyan"))
+            self.canvas.tag_bind(f"detail_option_{index}", "<Leave>", lambda e, idx=index: self.update_detail_colors())
+
+        # Descrizione
+        desc_text = (
+            "Molto basso: Grafica vettoriale (prestazioni migliori)\n"
+            "Alto: Immagini PNG (qualità migliore)"
+        )
+        self.canvas.create_text(
+            400, 400, text=desc_text, font=("Arial", 16), fill="lightgray", justify="center"
+        )
+
+        # Istruzioni per tornare al menù
+        self.canvas.create_text(
+            400, 500, text="Premi Esc per tornare al Menù", font=("Arial", 16),
+            fill="yellow"
+        )
+
+        # Associazione del tasto Esc
+        self.root.bind("<Escape>", self.back_to_main_menu)
+
+    def set_graphics_detail(self, index):
+        """Imposta il livello di dettaglio grafico"""
+        if index == 0:
+            self.graphics_detail = "low"
+        elif index == 1:
+            self.graphics_detail = "high"
+        self.update_detail_colors()
+
+    def update_detail_colors(self):
+        """Aggiorna i colori delle opzioni di dettaglio"""
+        for i in range(2):
+            if (i == 0 and self.graphics_detail == "low") or (i == 1 and self.graphics_detail == "high"):
+                self.canvas.itemconfig(f"detail_option_{i}", fill="yellow")
+            else:
+                self.canvas.itemconfig(f"detail_option_{i}", fill="white")
+
+    def load_image(self, image_name, size=None):
+        """Carica un'immagine dalla cartella img e la ridimensiona se necessario"""
+        cache_key = f"{image_name}_{size}" if size else image_name
+        
+        if cache_key in self.loaded_images:
+            return self.loaded_images[cache_key]
+        
+        try:
+            image_path = f"img/{image_name}"
+            image = Image.open(image_path)
+            
+            if size:
+                image = image.resize(size, RESAMPLE_FILTER)
+            
+            photo = ImageTk.PhotoImage(image)
+            self.loaded_images[cache_key] = photo
+            return photo
+        except Exception as e:
+            print(f"Errore nel caricamento dell'immagine {image_name}: {e}")
+            return None
+
+    def get_asteroid_image_name(self, size):
+        """Restituisce il nome dell'immagine dell'asteroide in base alla dimensione"""
+        if size <= 30:
+            return "asteroid_01.png"  # Piccolo
+        elif size <= 50:
+            return "asteroid_02.png"  # Medio
+        else:
+            return "asteroid_03.png"  # Grande
+
     # Funzione per gestire la pausa
     def toggle_pause(self, event=None):
         if self.game_running and not self.game_over:
@@ -356,15 +453,15 @@ class SpaceShooterGame:
         self.power_up_timer = 0
 
         # Crea la navicella
-        self.ship = Spaceship(self.canvas, 375, 550, self.ship_speed)
+        self.ship = Spaceship(self.canvas, 375, 550, speed=self.ship_speed, graphics_detail=self.graphics_detail, game_instance=self)
 
         # Manager per gli asteroidi
-        self.asteroid_manager = AsteroidManager(self.canvas, base_speed=2, max_speed=8)
+        self.asteroid_manager = AsteroidManager(self.canvas, base_speed=2, max_speed=8, graphics_detail=self.graphics_detail, game_instance=self)
 
         # Liste per proiettili e particelle, manager per power-up e fiammate
         self.bullets = []
         self.powerup_manager = PowerupManager(self.canvas)
-        self.rocket_flame_manager = RocketFlameManager(self.canvas)
+        self.rocket_flame_manager = RocketFlameManager(self.canvas, graphics_detail=self.graphics_detail, game_instance=self)
         self.particles = []
 
         # Etichette per il punteggio e le vite
@@ -430,9 +527,9 @@ class SpaceShooterGame:
     # Movimento della navicella con il mouse
     def move_ship_with_mouse(self, event):
         if not self.game_over and not self.game_paused:
-            ship_coords = self.ship.get_coords()
-            if ship_coords:
-                ship_width = ship_coords[4] - ship_coords[0]
+            ship_bbox = self.ship.get_bbox()
+            if ship_bbox:
+                ship_width = ship_bbox[2] - ship_bbox[0]
                 new_x = event.x - ship_width / 2
                 if self.ship.move_to_x(new_x):
                     self.add_rocket_effect()
@@ -536,7 +633,7 @@ class SpaceShooterGame:
             if not bullet_coords or len(bullet_coords) < 4:
                 continue
             for asteroid in self.asteroid_manager.get_asteroids()[:]:
-                asteroid_coords = asteroid.get_coords()
+                asteroid_coords = asteroid.get_bbox()
                 if not asteroid_coords or len(asteroid_coords) < 4:
                     continue
                 if self.check_overlap(bullet_coords, asteroid_coords):
@@ -552,7 +649,7 @@ class SpaceShooterGame:
                     break
         # Collisioni navicella - asteroidi
         for asteroid in self.asteroid_manager.get_asteroids()[:]:
-            asteroid_coords = asteroid.get_coords()
+            asteroid_coords = asteroid.get_bbox()
             if not asteroid_coords or len(asteroid_coords) < 4:
                 continue
             if self.check_overlap(ship_coords, asteroid_coords):
