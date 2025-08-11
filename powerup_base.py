@@ -1,17 +1,35 @@
 import random
 
 class Powerup:
-    def __init__(self, canvas, x, y, powerup_type, color):
+    def __init__(self, canvas, x, y, powerup_type, color, graphics_detail="low", game_instance=None):
         self.canvas = canvas
         self.x = x
         self.y = y
         self.powerup_type = powerup_type
         self.color = color
         self.speed = 2
+        self.graphics_detail = graphics_detail
+        self.game_instance = game_instance
         self.powerup_id = self.create_visual()
     
     def create_visual(self):
         """Crea la rappresentazione visiva del power-up"""
+        if self.graphics_detail == "high" and self.game_instance:
+            # Usa l'immagine specifica per il powerup con definizione alta
+            image_name = self.get_powerup_image_name()
+            if image_name:
+                image = self.game_instance.load_image(image_name, (24, 24))  # Dimensione powerup
+                if image:
+                    powerup_id = self.canvas.create_image(
+                        self.x, self.y, image=image, tags="powerup"
+                    )
+                    # Mantieni un riferimento all'immagine
+                    if not hasattr(self.canvas, 'powerup_images'):
+                        self.canvas.powerup_images = []
+                    self.canvas.powerup_images.append(image)
+                    return powerup_id
+        
+        # Fallback alla grafica vettoriale
         return self.canvas.create_oval(
             self.x - 10, self.y - 10, self.x + 10, self.y + 10,
             fill=self.color, outline="white", width=2
@@ -37,6 +55,14 @@ class Powerup:
     def get_type(self):
         """Restituisce il tipo di power-up"""
         return self.powerup_type
+    
+    def get_powerup_image_name(self):
+        """Restituisce il nome dell'immagine del powerup in base al tipo"""
+        if self.powerup_type == "double_fire":
+            return "double_fire_powerup.png"
+        elif self.powerup_type == "extra_life":
+            return "extralife_powerup.png"
+        return None
     
     def activate(self, game):
         """Attiva l'effetto del power-up - da implementare nelle sottoclassi"""

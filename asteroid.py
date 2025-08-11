@@ -16,9 +16,11 @@ class Asteroid:
     def create_visual(self, x, y):
         """Crea la rappresentazione visiva dell'asteroide"""
         if self.graphics_detail == "high" and self.game_instance:
-            # Usa l'immagine dell'asteroide
+            # Usa l'immagine dell'asteroide con dimensioni aumentate per definizione alta
             image_name = self.game_instance.get_asteroid_image_name(self.size)
-            image = self.game_instance.load_image(image_name, (self.size, self.size))
+            # Aumenta le dimensioni dell'immagine per definizione grafica alta
+            image_size = int(self.size * 1.8)  # Aumenta del 80% le dimensioni
+            image = self.game_instance.load_image(image_name, (image_size, image_size))
             if image:
                 asteroid_id = self.canvas.create_image(
                     x + self.size/2, y + self.size/2, image=image, tags="asteroid"

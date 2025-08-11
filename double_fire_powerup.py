@@ -1,8 +1,8 @@
 from powerup_base import Powerup
 
 class DoubleFirePowerup(Powerup):
-    def __init__(self, canvas, x, y):
-        super().__init__(canvas, x, y, "double_fire", "blue")
+    def __init__(self, canvas, x, y, graphics_detail="low", game_instance=None):
+        super().__init__(canvas, x, y, "double_fire", "blue", graphics_detail, game_instance)
     
     def activate(self, game):
         """Attiva l'effetto doppio fuoco"""
