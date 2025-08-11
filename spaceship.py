@@ -14,7 +14,7 @@ class Spaceship:
         """Crea la rappresentazione visiva della navicella"""
         if self.graphics_detail == "high" and self.game_instance:
             # Usa l'immagine della navicella
-            image = self.game_instance.load_image("spaceship.png", (50, 50))
+            image = self.game_instance.load_image("spaceship.png", (70, 70))
             if image:
                 ship = self.canvas.create_image(
                     self.x + 25, self.y, image=image, tags="ship"
