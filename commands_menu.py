@@ -1,4 +1,5 @@
 import tkinter as tk
+from i18n import i18n, _
 
 class CommandsMenu:
     def __init__(self, canvas, root, game_instance):
@@ -15,7 +16,7 @@ class CommandsMenu:
         self.game.draw_gradient_background()
         
         self.canvas.create_text(
-            400, 150, text="Impostazioni Comandi", font=("Arial", 30, "bold"), fill="white"
+            400, 150, text=_("commands_settings"), font=("Arial", 30, "bold"), fill="white"
         )
         
         # Posizione della casella di controllo
@@ -37,7 +38,7 @@ class CommandsMenu:
         # Disegna l'etichetta con dimensione di font originale
         self.checkbox_label = self.canvas.create_text(
             checkbox_x + 30, checkbox_y + checkbox_size / 2,
-            text="Sposta la navicella attraverso il mouse",
+            text=_("mouse_control"),
             font=("Arial", 16), fill="white", anchor="w", tags="checkbox_label"
         )
         
@@ -50,7 +51,7 @@ class CommandsMenu:
         
         # Istruzioni per tornare al menù
         self.canvas.create_text(
-            400, 500, text="Premi Esc per tornare al Menù", font=("Arial", 16),
+            400, 500, text=_("back_to_menu"), font=("Arial", 16),
             fill="yellow"
         )
         

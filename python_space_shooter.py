@@ -14,6 +14,8 @@ from main_menu import MainMenu
 from instructions_menu import InstructionsMenu
 from commands_menu import CommandsMenu
 from graphics_options_menu import GraphicsOptionsMenu
+from language_menu import LanguageMenu
+from i18n import i18n, _
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -56,6 +58,7 @@ class SpaceShooterGame:
         self.instructions_menu = InstructionsMenu(self.canvas, self.root, self)
         self.commands_menu = CommandsMenu(self.canvas, self.root, self)
         self.graphics_menu = GraphicsOptionsMenu(self.canvas, self.root, self)
+        self.language_menu = LanguageMenu(self.canvas, self.root, self)
 
         # Mostra il menù principale
         self.main_menu.show()
@@ -97,6 +100,22 @@ class SpaceShooterGame:
     # Funzione per mostrare il menù "Comandi" (ora delegata alla classe CommandsMenu)
     def show_commands_menu(self):
         self.commands_menu.show()
+    
+    # Funzione per mostrare il menù "Lingua" (ora delegata alla classe LanguageMenu)
+    def show_language_menu(self):
+        self.language_menu.show()
+    
+    # Funzione chiamata quando la lingua cambia per aggiornare l'interfaccia
+    def on_language_changed(self):
+        """Aggiorna l'interfaccia quando cambia la lingua"""
+        # Se il gioco è in corso, aggiorna le etichette
+        if self.game_running and hasattr(self, 'score_label') and hasattr(self, 'lives_label'):
+            self.update_score()
+            self.update_lives()
+            
+            # Se il gioco è in pausa, aggiorna la schermata di pausa
+            if self.game_paused:
+                self.show_pause_screen()
 
     # Funzioni per il controllo mouse (ora delegate alla classe CommandsMenu)
     def draw_checkmark(self):
@@ -172,23 +191,28 @@ class SpaceShooterGame:
 
     # Funzione per mostrare la schermata di pausa
     def show_pause_screen(self):
+        # Crea un rettangolo semi-trasparente per coprire lo schermo
+        self.canvas.create_rectangle(
+            0, 0, 800, 600, fill="black", stipple="gray50", tags="pause_screen"
+        )
+        
         # Crea la scritta "PAUSA" con contorno nero
         self.pause_text_shadow = self.canvas.create_text(
-            402, 302, text="PAUSA", font=("Arial", 60, "bold"),
+            402, 302, text=_("paused"), font=("Arial", 60, "bold"),
             fill="black", tags="pause_screen"
         )
         self.pause_text = self.canvas.create_text(
-            400, 300, text="PAUSA", font=("Arial", 60, "bold"),
+            400, 300, text=_("paused"), font=("Arial", 60, "bold"),
             fill="white", tags="pause_screen"
         )
         
         # Istruzioni per riprendere
         self.pause_instructions_shadow = self.canvas.create_text(
-            402, 372, text="Premi P per riprendere", font=("Arial", 20),
+            402, 372, text=_("pause_instruction"), font=("Arial", 20),
             fill="black", tags="pause_screen"
         )
         self.pause_instructions = self.canvas.create_text(
-            400, 370, text="Premi P per riprendere", font=("Arial", 20),
+            400, 370, text=_("pause_instruction"), font=("Arial", 20),
             fill="white", tags="pause_screen"
         )
 
@@ -244,11 +268,11 @@ class SpaceShooterGame:
 
         # Etichette per il punteggio e le vite
         self.score_label = self.canvas.create_text(
-            10, 10, text=f"Punteggio: {self.score}", font=("Arial", 14),
+            10, 10, text=f"{_("score")}: {self.score}", font=("Arial", 14),
             fill="white", anchor="nw"
         )
         self.lives_label = self.canvas.create_text(
-            790, 10, text=f"Vite: {self.lives}", font=("Arial", 14),
+            790, 10, text=f"{_("lives")}: {self.lives}", font=("Arial", 14),
             fill="white", anchor="ne"
         )
 
@@ -468,11 +492,11 @@ class SpaceShooterGame:
 
     # Aggiornamento del punteggio
     def update_score(self):
-        self.canvas.itemconfig(self.score_label, text=f"Punteggio: {self.score}")
+        self.canvas.itemconfig(self.score_label, text=f"{_("score")}: {self.score}")
 
     # Aggiornamento delle vite
     def update_lives(self):
-        self.canvas.itemconfig(self.lives_label, text=f"Vite: {self.lives}")
+        self.canvas.itemconfig(self.lives_label, text=f"{_("lives")}: {self.lives}")
 
 
 
@@ -488,11 +512,11 @@ class SpaceShooterGame:
     # Funzione per mostrare il nome del power-up con effetto animato
     def show_power_up_text(self, power_up_type):
         if power_up_type == "extra_life":
-            text = "Vita Extra!"
+            text = _("extra_life")
         elif power_up_type == "double_fire":
-            text = "Doppio Fuoco!"
+            text = _("double_fire")
         else:
-            text = "Power-up!"
+            text = _("power_up")
         # Creiamo un gruppo per gestire facilmente gli elementi del testo
         group = []
         # Crea il testo nero per il contorno (più copie leggermente spostate)
@@ -617,7 +641,7 @@ class SpaceShooterGame:
         image = Image.new("RGBA", (800, 600), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
         font_size = 70
-        text = "YOU WIN" if win else "GAME OVER"
+        text = _("you_win") if win else _("game_over")
         main_color = (0, 255, 0, 255) if win else (255, 0, 0, 255)  # Verde per win, rosso per game over
         
         # Definisci il font usando ImageFont di Pillow
@@ -643,7 +667,7 @@ class SpaceShooterGame:
         draw.text((x, y), text, font=font, fill=main_color)
         
         # Aggiungi il testo del punteggio
-        score_text = f"Punteggio finale: {self.score}"
+        score_text = f"{_("final_score")}: {self.score}"
         score_bbox = small_font.getbbox(score_text)
         score_width = score_bbox[2] - score_bbox[0]
         score_x = 400 - score_width / 2

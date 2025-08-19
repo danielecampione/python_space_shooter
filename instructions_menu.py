@@ -1,4 +1,5 @@
 import tkinter as tk
+from i18n import i18n, _
 
 class InstructionsMenu:
     def __init__(self, canvas, root, game_instance):
@@ -12,21 +13,20 @@ class InstructionsMenu:
         self.game.draw_gradient_background()
         
         instructions_text = (
-            "Benvenuto in Space Shooter!\n\n"
-            "Obiettivo del Gioco:\n"
-            "Sopravvivi il più a lungo possibile distruggendo gli asteroidi.\n\n"
-            "Controlli:\n"
-            " - Freccia Sinistra: Muovi la navicella a sinistra\n"
-            " - Freccia Destra: Muovi la navicella a destra\n"
-            " - Barra Spaziatrice: Spara\n"
-            " - P: Pausa/Riprendi il gioco\n\n"
-            "Modalità Mouse Attiva:\n"
-            " - Muovi il mouse per muovere la navicella\n"
-            " - Clicca con il tasto sinistro per sparare\n\n"
-            "Power-up:\n"
-            "Raccogli i power-up per ottenere bonus come vite extra\n"
-            "o proiettili potenziati.\n\n"
-            "Buona fortuna, pilota!"
+            f"{_("instructions_title")}\n\n"
+            f"{_("game_objective")}\n"
+            f"{_("game_objective_text")}\n\n"
+            f"{_("controls")}\n"
+            f"{_("control_left")}\n"
+            f"{_("control_right")}\n"
+            f"{_("control_space")}\n"
+            f"{_("control_pause")}\n\n"
+            f"{_("mouse_mode")}\n"
+            f"{_("mouse_move")}\n"
+            f"{_("mouse_click")}\n\n"
+            f"{_("powerups")}\n"
+            f"{_("powerups_text")}\n\n"
+            f"{_("good_luck")}"
         )
         
         self.canvas.create_text(
@@ -35,7 +35,7 @@ class InstructionsMenu:
         
         # Istruzioni per tornare al menù
         self.canvas.create_text(
-            400, 500, text="Premi Esc per tornare al Menù", font=("Arial", 16),
+            400, 500, text=_("back_to_menu"), font=("Arial", 16),
             fill="yellow"
         )
         
