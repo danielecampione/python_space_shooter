@@ -10,6 +10,10 @@ from asteroid_manager import AsteroidManager
 from star_field import StarField
 from powerup_manager import PowerupManager
 from rocket_flame_manager_single import RocketFlameManager
+from main_menu import MainMenu
+from instructions_menu import InstructionsMenu
+from commands_menu import CommandsMenu
+from graphics_options_menu import GraphicsOptionsMenu
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -47,12 +51,14 @@ class SpaceShooterGame:
         # Disegna sfondo con gradiente
         self.draw_gradient_background()
 
-        # Variabili per il menù
-        self.menu_options = ["Inizia Partita", "Istruzioni", "Comandi", "Opzioni grafiche", "Esci"]
-        self.selected_option = 0  # Indice dell'opzione selezionata
+        # Inizializza i menù object-oriented
+        self.main_menu = MainMenu(self.canvas, self.root, self)
+        self.instructions_menu = InstructionsMenu(self.canvas, self.root, self)
+        self.commands_menu = CommandsMenu(self.canvas, self.root, self)
+        self.graphics_menu = GraphicsOptionsMenu(self.canvas, self.root, self)
 
         # Mostra il menù principale
-        self.show_main_menu()
+        self.main_menu.show()
         
         self.fade_in()
 
@@ -73,284 +79,46 @@ class SpaceShooterGame:
         # Porta in primo piano gli elementi del gioco dopo aver disegnato lo sfondo
         self.canvas.tag_lower("gradient")
 
-    # Funzione per mostrare il menù principale
+    # Funzione per mostrare il menù principale (ora delegata alla classe MainMenu)
     def show_main_menu(self):
-        # Cancella tutto
-        self.canvas.delete("all")
-        self.draw_gradient_background()
+        self.main_menu.show()
 
-        self.menu_items = []
+    # Funzioni per navigare nel menù (ora gestite dalle classi del menù)
+    # Mantenute per compatibilità con eventuali riferimenti esterni
 
-        # Titolo del gioco con font divertente
-        self.canvas.create_text(
-            400, 150, text="★ Space Shooter ★", font=("Comic Sans MS", 50, "bold"), fill="white"
-        )
-
-        # Posizioni delle opzioni di menù
-        menu_y_start = 300
-        menu_y_gap = 60
-
-        # Cursore per indicare l'opzione selezionata
-        self.cursor = self.canvas.create_text(
-            300, menu_y_start + self.selected_option * menu_y_gap, text="➤", font=("Arial", 24),
-            fill="yellow", anchor="e"
-        )
-
-        # Crea le opzioni del menù
-        for index, option in enumerate(self.menu_options):
-            item = self.canvas.create_text(
-                310, menu_y_start + index * menu_y_gap, text=option, font=("Arial", 24),
-                fill="white", anchor="w", tags=f"menu_option_{index}"
-            )
-            self.menu_items.append(item)
-
-            # Associa gli eventi del mouse per ogni opzione
-            self.canvas.tag_bind(item, "<Enter>", lambda e, idx=index: self.menu_hover(idx))
-            self.canvas.tag_bind(item, "<Leave>", lambda e: self.menu_leave())
-            self.canvas.tag_bind(item, "<Button-1>", lambda e, idx=index: self.menu_click(idx))
-
-        # Associazione dei tasti per il menù
-        self.root.bind("<Up>", self.menu_up)
-        self.root.bind("<Down>", self.menu_down)
-        self.root.bind("<Return>", self.menu_select)
-        self.root.bind("<Escape>", self.back_to_main_menu)
-
-    # Funzioni per navigare nel menù
-    def menu_up(self, event):
-        if not self.game_running:
-            self.selected_option = (self.selected_option - 1) % len(self.menu_options)
-            self.update_menu_selection()
-
-    def menu_down(self, event):
-        if not self.game_running:
-            self.selected_option = (self.selected_option + 1) % len(self.menu_options)
-            self.update_menu_selection()
-
-    def update_menu_selection(self):
-        menu_y_start = 300
-        menu_y_gap = 60
-        self.canvas.coords(
-            self.cursor, 300, menu_y_start + self.selected_option * menu_y_gap
-        )
-
-    def menu_select(self, event):
-        if not self.game_running:
-            self.execute_menu_option(self.selected_option)
-
-    def menu_hover(self, index):
-        if not self.game_running:
-            self.selected_option = index
-            self.update_menu_selection()
-
-    def menu_leave(self):
-        pass  # Puoi aggiungere effetti quando il mouse esce da un'opzione, se desideri
-
-    def menu_click(self, index):
-        if not self.game_running:
-            self.execute_menu_option(index)
-
-    def execute_menu_option(self, index):
-        option = self.menu_options[index]
-        if option == "Inizia Partita":
-            self.start_game()
-        elif option == "Istruzioni":
-            self.show_instructions()
-        elif option == "Comandi":
-            self.show_commands_menu()
-        elif option == "Opzioni grafiche":
-            self.show_graphics_options()
-        elif option == "Esci":
-            self.root.destroy()
-
-    # Funzione per tornare al menù principale
+    # Funzione per tornare al menù principale (ora delegata alla classe MainMenu)
     def back_to_main_menu(self, event=None):
-        if self.game_running:
-            # Se il gioco è in corso, attiva il game over solo se non è già attivo
-            if not self.game_over:
-                self.lives = 0
-                self.update_lives()
-                self.game_over_screen()
-            self.end_game()
-            self.selected_option = 0
-        else:
-            self.selected_option = 0
-        self.show_main_menu()
+        self.main_menu.back_to_main_menu(event)
 
-    # Funzione per mostrare le istruzioni
+    # Funzione per mostrare le istruzioni (ora delegata alla classe InstructionsMenu)
     def show_instructions(self):
-        self.canvas.delete("all")
-        self.draw_gradient_background()
+        self.instructions_menu.show()
 
-        instructions_text = (
-            "Benvenuto in Space Shooter!\n\n"
-            "Obiettivo del Gioco:\n"
-            "Sopravvivi il più a lungo possibile distruggendo gli asteroidi.\n\n"
-            "Controlli:\n"
-            " - Freccia Sinistra: Muovi la navicella a sinistra\n"
-            " - Freccia Destra: Muovi la navicella a destra\n"
-            " - Barra Spaziatrice: Spara\n"
-            " - P: Pausa/Riprendi il gioco\n\n"
-            "Modalità Mouse Attiva:\n"
-            " - Muovi il mouse per muovere la navicella\n"
-            " - Clicca con il tasto sinistro per sparare\n\n"
-            "Power-up:\n"
-            "Raccogli i power-up per ottenere bonus come vite extra\n"
-            "o proiettili potenziati.\n\n"
-            "Buona fortuna, pilota!"
-        )
-
-        self.canvas.create_text(
-            400, 250, text=instructions_text, font=("Arial", 14), fill="white", width=600
-        )
-
-        # Istruzioni per tornare al menù
-        self.canvas.create_text(
-            400, 500, text="Premi Esc per tornare al Menù", font=("Arial", 16),
-            fill="yellow"
-        )
-
-        # Associazione del tasto Esc
-        self.root.bind("<Escape>", self.back_to_main_menu)
-
-    # Funzione per mostrare il menù "Comandi"
+    # Funzione per mostrare il menù "Comandi" (ora delegata alla classe CommandsMenu)
     def show_commands_menu(self):
-        self.canvas.delete("all")
-        self.draw_gradient_background()
+        self.commands_menu.show()
 
-        self.canvas.create_text(
-            400, 150, text="Impostazioni Comandi", font=("Arial", 30, "bold"), fill="white"
-        )
-
-        # Posizione della casella di controllo
-        checkbox_x = 280
-        checkbox_y = 300
-        checkbox_size = 20
-
-        # Disegna la casella di controllo
-        self.checkbox = self.canvas.create_rectangle(
-            checkbox_x, checkbox_y,
-            checkbox_x + checkbox_size, checkbox_y + checkbox_size,
-            outline="white", fill="", width=2, tags="checkbox"
-        )
-
-        # Disegna la spunta se necessario
-        if self.control_with_mouse:
-            self.draw_checkmark()
-
-        # Disegna l'etichetta con dimensione di font originale
-        self.checkbox_label = self.canvas.create_text(
-            checkbox_x + 30, checkbox_y + checkbox_size / 2,
-            text="Sposta la navicella attraverso il mouse",
-            font=("Arial", 16), fill="white", anchor="w", tags="checkbox_label"
-        )
-
-        # Unisci casella di controllo ed etichetta in un unico gruppo per l'interazione
-        self.canvas.addtag_withtag("checkbox_group", self.checkbox)
-        self.canvas.addtag_withtag("checkbox_group", self.checkbox_label)
-
-        # Associa l'evento clic all'intero gruppo
-        self.canvas.tag_bind("checkbox_group", "<Button-1>", self.toggle_mouse_control)
-
-        # Istruzioni per tornare al menù
-        self.canvas.create_text(
-            400, 500, text="Premi Esc per tornare al Menù", font=("Arial", 16),
-            fill="yellow"
-        )
-
-        # Associazione del tasto Esc
-        self.root.bind("<Escape>", self.back_to_main_menu)
-
-    # Funzione per disegnare la spunta nella casella di controllo
+    # Funzioni per il controllo mouse (ora delegate alla classe CommandsMenu)
     def draw_checkmark(self):
-        checkbox_x = 280 
-        checkbox_y = 300
-        checkbox_size = 20
-        # Verifica se la spunta è già stata disegnata
-        if hasattr(self, 'checkmark'):
-            self.canvas.delete(self.checkmark)
-        self.checkmark = self.canvas.create_line(
-            checkbox_x + 4, checkbox_y + checkbox_size / 2,
-            checkbox_x + checkbox_size / 2, checkbox_y + checkbox_size - 4,
-            checkbox_x + checkbox_size - 4, checkbox_y + 4,
-            fill="white", width=2, tags="checkmark"
-        )
-        # Aggiungi la spunta al gruppo per l'interazione
-        self.canvas.addtag_withtag("checkbox_group", self.checkmark)
+        self.commands_menu.draw_checkmark()
 
-    # Funzione per rimuovere la spunta dalla casella di controllo
     def remove_checkmark(self):
-        if hasattr(self, 'checkmark'):
-            self.canvas.delete(self.checkmark)
-            del self.checkmark
+        self.commands_menu.remove_checkmark()
 
-    # Funzione per attivare/disattivare il controllo con il mouse
     def toggle_mouse_control(self, event=None):
-        self.control_with_mouse = not self.control_with_mouse
-        if self.control_with_mouse:
-            self.draw_checkmark()  # Mostra la spunta
-        else:
-            self.remove_checkmark()
+        self.commands_menu.toggle_mouse_control(event)
 
-    # Funzione per mostrare le opzioni grafiche
+    # Funzione per mostrare le opzioni grafiche (ora delegata alla classe GraphicsOptionsMenu)
     def show_graphics_options(self):
-        self.canvas.delete("all")
-        self.draw_gradient_background()
-
-        # Titolo
-        self.canvas.create_text(
-            400, 150, text="Opzioni Grafiche", font=("Arial", 36, "bold"), fill="white"
-        )
-
-        # Opzioni di dettaglio
-        detail_options = ["Molto basso", "Alto"]
-        detail_y_start = 250
-        detail_y_gap = 60
-
-        for index, option in enumerate(detail_options):
-            color = "yellow" if (index == 0 and self.graphics_detail == "low") or (index == 1 and self.graphics_detail == "high") else "white"
-            self.canvas.create_text(
-                400, detail_y_start + index * detail_y_gap, text=option, font=("Arial", 24),
-                fill=color, tags=f"detail_option_{index}"
-            )
-            
-            # Associa eventi di clic
-            self.canvas.tag_bind(f"detail_option_{index}", "<Button-1>", lambda e, idx=index: self.set_graphics_detail(idx))
-            self.canvas.tag_bind(f"detail_option_{index}", "<Enter>", lambda e, idx=index: self.canvas.itemconfig(f"detail_option_{idx}", fill="cyan"))
-            self.canvas.tag_bind(f"detail_option_{index}", "<Leave>", lambda e, idx=index: self.update_detail_colors())
-
-        # Descrizione
-        desc_text = (
-            "Molto basso: Grafica vettoriale (prestazioni migliori)\n"
-            "Alto: Immagini PNG (qualità migliore)"
-        )
-        self.canvas.create_text(
-            400, 400, text=desc_text, font=("Arial", 16), fill="lightgray", justify="center"
-        )
-
-        # Istruzioni per tornare al menù
-        self.canvas.create_text(
-            400, 500, text="Premi Esc per tornare al Menù", font=("Arial", 16),
-            fill="yellow"
-        )
-
-        # Associazione del tasto Esc
-        self.root.bind("<Escape>", self.back_to_main_menu)
+        self.graphics_options_menu.show()
 
     def set_graphics_detail(self, index):
-        """Imposta il livello di dettaglio grafico"""
-        if index == 0:
-            self.graphics_detail = "low"
-        elif index == 1:
-            self.graphics_detail = "high"
-        self.update_detail_colors()
+        """Imposta il livello di dettaglio grafico (ora delegata alla classe GraphicsOptionsMenu)"""
+        self.graphics_options_menu.set_graphics_detail(index)
 
     def update_detail_colors(self):
-        """Aggiorna i colori delle opzioni di dettaglio"""
-        for i in range(2):
-            if (i == 0 and self.graphics_detail == "low") or (i == 1 and self.graphics_detail == "high"):
-                self.canvas.itemconfig(f"detail_option_{i}", fill="yellow")
-            else:
-                self.canvas.itemconfig(f"detail_option_{i}", fill="white")
+        """Aggiorna i colori delle opzioni di dettaglio (ora delegata alla classe GraphicsOptionsMenu)"""
+        self.graphics_options_menu.update_detail_colors()
 
     def load_image(self, image_name, size=None):
         """Carica un'immagine dalla cartella img e la ridimensiona se necessario"""
