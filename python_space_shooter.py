@@ -253,6 +253,8 @@ class SpaceShooterGame:
         self.power_up_active = False
         self.power_up_type = None
         self.power_up_timer = 0
+        # Rende disponibile il livello di dettaglio sul canvas per disegni vettoriali
+        setattr(self.canvas, 'graphics_detail', self.graphics_detail)
         self.game_start_time = None
         self.game_time_elapsed = 0
 

@@ -32,8 +32,32 @@ class Powerup:
                     return powerup_id
         
         # Fallback alla grafica vettoriale
-        # Aumenta le dimensioni di 5 volte con definizione grafica alta
-        radius = 60 if self.graphics_detail == "high" else 10
+        if self.graphics_detail == "low":
+            # Disegno migliorato per ciascun powerup
+            if self.powerup_type == "extra_life":
+                # Cuore stilizzato
+                path = [
+                    self.x, self.y + 8,
+                    self.x - 10, self.y - 4,
+                    self.x - 6, self.y - 12,
+                    self.x, self.y - 6,
+                    self.x + 6, self.y - 12,
+                    self.x + 10, self.y - 4
+                ]
+                return self.canvas.create_polygon(path, fill=self.color, outline="white", width=2, smooth=True, tags="powerup")
+            elif self.powerup_type == "double_fire":
+                # Icona doppio proiettile stilizzata
+                g = []
+                g.append(self.canvas.create_rectangle(self.x - 8, self.y - 10, self.x - 4, self.y + 10, fill=self.color, outline="white", width=2, tags="powerup"))
+                g.append(self.canvas.create_rectangle(self.x + 4, self.y - 10, self.x + 8, self.y + 10, fill=self.color, outline="white", width=2, tags="powerup"))
+                # punta luminosa
+                g.append(self.canvas.create_polygon(self.x - 9, self.y - 12, self.x - 3, self.y - 12, self.x - 6, self.y - 18, fill="yellow", outline="white", width=1, tags="powerup"))
+                g.append(self.canvas.create_polygon(self.x + 3, self.y - 12, self.x + 9, self.y - 12, self.x + 6, self.y - 18, fill="yellow", outline="white", width=1, tags="powerup"))
+                # Raggruppo creando un rettangolo invisibile come ID principale
+                return self.canvas.create_rectangle(self.x - 12, self.y - 20, self.x + 12, self.y + 20, outline="", fill="", tags="powerup")
+        
+        # Modalità molto bassa: semplice cerchio
+        radius = 10
         return self.canvas.create_oval(
             self.x - radius, self.y - radius, self.x + radius, self.y + radius,
             fill=self.color, outline="white", width=2

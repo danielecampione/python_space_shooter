@@ -34,7 +34,7 @@ class MainMenu:
         
         # Posizioni delle opzioni di menù
         menu_y_start = 300
-        menu_y_gap = 60
+        menu_y_gap = 48
         
         # Cursore per indicare l'opzione selezionata
         self.cursor = self.canvas.create_text(
@@ -83,7 +83,7 @@ class MainMenu:
     def update_menu_selection(self):
         """Aggiorna la posizione del cursore"""
         menu_y_start = 300
-        menu_y_gap = 60
+        menu_y_gap = 48
         self.canvas.coords(
             self.cursor, 300, menu_y_start + self.selected_option * menu_y_gap
         )
