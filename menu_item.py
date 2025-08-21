@@ -1,5 +1,5 @@
 class MenuItem:
-    def __init__(self, text, action=None, font=("Arial", 24), color="white", selected_color="yellow"):
+    def __init__(self, text, action=None, font=("Arial", 20), color="white", selected_color="yellow"):
         self.text = text
         self.action = action
         self.font = font

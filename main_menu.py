@@ -38,7 +38,7 @@ class MainMenu:
         
         # Cursore per indicare l'opzione selezionata
         self.cursor = self.canvas.create_text(
-            300, menu_y_start + self.selected_option * menu_y_gap, text="➤", font=("Arial", 24),
+            300, menu_y_start + self.selected_option * menu_y_gap, text="➤", font=("Arial", 20),
             fill="yellow", anchor="e"
         )
         
