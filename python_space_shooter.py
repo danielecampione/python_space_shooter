@@ -86,12 +86,7 @@ class SpaceShooterGame:
     def show_main_menu(self):
         self.main_menu.show()
 
-    # Funzioni per navigare nel menù (ora gestite dalle classi del menù)
-    # Mantenute per compatibilità con eventuali riferimenti esterni
 
-    # Funzione per tornare al menù principale (ora delegata alla classe MainMenu)
-    def back_to_main_menu(self, event=None):
-        self.main_menu.back_to_main_menu(event)
 
     # Funzione per mostrare le istruzioni (ora delegata alla classe InstructionsMenu)
     def show_instructions(self):
@@ -116,16 +111,12 @@ class SpaceShooterGame:
             # Se il gioco è in pausa, aggiorna la schermata di pausa
             if self.game_paused:
                 self.show_pause_screen()
+    
+    def back_to_main_menu(self, event=None):
+        """Torna al menù principale"""
+        self.main_menu.back_to_main_menu(event)
 
-    # Funzioni per il controllo mouse (ora delegate alla classe CommandsMenu)
-    def draw_checkmark(self):
-        self.commands_menu.draw_checkmark()
 
-    def remove_checkmark(self):
-        self.commands_menu.remove_checkmark()
-
-    def toggle_mouse_control(self, event=None):
-        self.commands_menu.toggle_mouse_control(event)
 
     # Funzione per mostrare le opzioni grafiche (ora delegata alla classe GraphicsOptionsMenu)
     def show_graphics_options(self):
@@ -354,12 +345,12 @@ class SpaceShooterGame:
                 # Spara due proiettili diagonali
                 angle_offsets = [-10, 10]
                 for offset in angle_offsets:
-                    projectile = DiagonalProjectile(self.canvas, center_x, top_y, offset, self.bullet_speed)
-                    self.bullets.append({"id": projectile.get_id(), "dx": offset / 10})
+                    projectile = DiagonalProjectile(self.canvas, center_x, top_y, offset, self.bullet_speed, self.graphics_detail)
+                    self.bullets.append({"id": projectile.get_id(), "dx": offset / 10, "projectile_obj": projectile})
             else:
                 # Spara un proiettile dritto
-                projectile = Projectile(self.canvas, center_x, top_y, 0, self.bullet_speed)
-                self.bullets.append({"id": projectile.get_id(), "dx": 0})
+                projectile = Projectile(self.canvas, center_x, top_y, 0, self.bullet_speed, self.graphics_detail)
+                self.bullets.append({"id": projectile.get_id(), "dx": 0, "projectile_obj": projectile})
 
 
 
@@ -400,7 +391,11 @@ class SpaceShooterGame:
             self.canvas.move(bullet["id"], bullet["dx"], -self.bullet_speed)
             bbox = self.canvas.bbox(bullet["id"])
             if not bbox or len(bbox) < 4 or bbox[1] < 0 or bbox[0] < 0 or bbox[2] > 800:
-                self.canvas.delete(bullet["id"])
+                # Usa il metodo destroy del proiettile se disponibile
+                if "projectile_obj" in bullet:
+                    bullet["projectile_obj"].destroy()
+                else:
+                    self.canvas.delete(bullet["id"])
                 self.bullets.remove(bullet)
 
 
@@ -458,7 +453,11 @@ class SpaceShooterGame:
                 if not asteroid_coords or len(asteroid_coords) < 4:
                     continue
                 if self.check_overlap(bullet_coords, asteroid_coords):
-                    self.canvas.delete(bullet["id"])
+                    # Usa il metodo destroy del proiettile se disponibile
+                    if "projectile_obj" in bullet:
+                        bullet["projectile_obj"].destroy()
+                    else:
+                        self.canvas.delete(bullet["id"])
                     if bullet in self.bullets:
                         self.bullets.remove(bullet)
                     self.destroy_asteroid(asteroid)
@@ -628,7 +627,11 @@ class SpaceShooterGame:
         if hasattr(self, 'ship') and self.ship:
             self.ship.delete()
         for bullet in self.bullets:
-            self.canvas.delete(bullet["id"])
+            # Usa il metodo destroy del proiettile se disponibile
+            if "projectile_obj" in bullet:
+                bullet["projectile_obj"].destroy()
+            else:
+                self.canvas.delete(bullet["id"])
         self.bullets.clear()
         self.asteroid_manager.clear_all_asteroids()
         self.powerup_manager.clear_all_powerups()
