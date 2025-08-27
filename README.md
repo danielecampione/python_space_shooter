@@ -1,7 +1,6 @@
 # Python Space Shooter
 A GUI application (a game) in Python 3.  
 
-Screenshot:
 ![Png](https://i.ibb.co/GQjJTFQ7/Immagine-2025-08-12-000139.png)
 
 ---
