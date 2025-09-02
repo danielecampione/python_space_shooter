@@ -138,7 +138,7 @@ class SpaceShooterGame:
             return self.loaded_images[cache_key]
         
         try:
-            image_path = f"img/{image_name}"
+            image_path = f"images/{image_name}"
             image = Image.open(image_path)
             
             if size:
