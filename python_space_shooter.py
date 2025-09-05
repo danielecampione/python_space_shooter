@@ -131,14 +131,14 @@ class SpaceShooterGame:
         self.graphics_options_menu.update_detail_colors()
 
     def load_image(self, image_name, size=None):
-        """Carica un'immagine dalla cartella img e la ridimensiona se necessario"""
+        """Carica un'immagine dalla cartella images e la ridimensiona se necessario"""
         cache_key = f"{image_name}_{size}" if size else image_name
         
         if cache_key in self.loaded_images:
             return self.loaded_images[cache_key]
         
         try:
-            image_path = f"img/{image_name}"
+            image_path = f"images/{image_name}"
             image = Image.open(image_path)
             
             if size:
