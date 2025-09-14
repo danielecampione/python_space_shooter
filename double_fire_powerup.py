@@ -6,6 +6,7 @@ class DoubleFirePowerup(Powerup):
     
     def activate(self, game):
         """Attiva l'effetto doppio fuoco"""
-        game.double_fire_active = True
-        game.double_fire_timer = 300  # 10 secondi a 30 FPS
+        game.power_up_active = True
+        game.power_up_type = "double_fire"
+        game.power_up_timer = 300  # 10 secondi a 30 FPS
         game.show_power_up_text("double_fire")

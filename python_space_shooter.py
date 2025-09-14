@@ -3,8 +3,10 @@ from PIL import Image, ImageDraw, ImageTk, ImageFont, ImageFilter
 import random
 import math
 from spaceship import Spaceship
-from projectile import Projectile, DiagonalProjectile
-from asteroid import Asteroid, AsteroidManager
+from projectile import Projectile
+from diagonal_projectile import DiagonalProjectile
+from asteroid import Asteroid
+from asteroid_manager import AsteroidManager
 from star_field import StarField
 from powerup_manager import PowerupManager
 from rocket_flame_manager_single import RocketFlameManager
