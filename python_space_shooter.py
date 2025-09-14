@@ -539,9 +539,9 @@ class SpaceShooterGame:
                 self.power_ups.remove(power_up)
 
     # Funzione per creare un effetto particellare migliorato
-    def create_explosion(self, x, y):
+    def create_explosion(self, x, y, num_particles=50):
         colors = ["#fffae3", "#ffc857", "#ff6b35", "#d7263d", "#a20021"]
-        for _ in range(50):
+        for _ in range(num_particles):
             angle = random.uniform(0, 2 * math.pi)
             speed = random.uniform(2, 7)
             dx = math.cos(angle) * speed
@@ -595,6 +595,9 @@ class SpaceShooterGame:
                     self.destroy_asteroid(asteroid)
                     self.score += 1
                     self.update_score()
+                    # Controlla se il punteggio ha raggiunto 500
+                    if self.score >= 500 and not self.game_over:
+                        self.game_over_screen(win=True)
                     break
         # Collisioni navicella - asteroidi
         for asteroid in self.asteroids[:]:
@@ -611,7 +614,7 @@ class SpaceShooterGame:
                 self.flash_ship()
                 if self.lives <= 0:
                     if not self.game_over:
-                        self.game_over_screen()
+                        self.game_over_screen(win=False)
                     return
         # Collisioni navicella - power-up
         for power_up in self.power_ups[:]:
@@ -756,13 +759,16 @@ class SpaceShooterGame:
         coords = self.canvas.coords(asteroid["id"])
         x = (coords[0] + coords[2]) / 2
         y = (coords[1] + coords[3]) / 2
+        size = asteroid["size"]
         self.canvas.delete(asteroid["id"])
         if asteroid in self.asteroids:
             self.asteroids.remove(asteroid)
-        self.create_explosion(x, y)
+        # Calcola il numero di particelle in base alla dimensione dell'asteroide
+        num_particles = int(size * 0.8)  # Numero proporzionale alla dimensione
+        self.create_explosion(x, y, num_particles)
 
     # Funzione per mostrare lo schermo di Game Over con animazione 3D
-    def game_over_screen(self):
+    def game_over_screen(self, win=False):
         if self.game_over:  # Se il game over è già attivo, esci
             return
         self.game_over = True
@@ -770,8 +776,8 @@ class SpaceShooterGame:
         self.clear_game_objects()
         # Rimuovi le associazioni dei tasti
         self.unbind_game_controls()
-        # Mostra la scritta "GAME OVER" con effetto 3D
-        self.show_game_over_3d()
+        # Mostra la scritta "GAME OVER" o "YOU WIN" con effetto 3D
+        self.show_game_over_3d(win)
 
     # Funzione per terminare il gioco e tornare al menù
     def end_game(self):
@@ -820,32 +826,51 @@ class SpaceShooterGame:
         self.canvas.unbind("<Button-1>")
 
     # Funzione per creare un testo 3D con animazione breve
-    def show_game_over_3d(self):
-        # Crea un'immagine con il testo "GAME OVER"
+    def show_game_over_3d(self, win=False):
+        # Crea un'immagine con il testo "GAME OVER" o "YOU WIN"
         image = Image.new("RGBA", (800, 600), (0, 0, 0, 0))
         draw = ImageDraw.Draw(image)
         font_size = 70
-        text = "GAME OVER"
+        text = "YOU WIN" if win else "GAME OVER"
+        main_color = (0, 255, 0, 255) if win else (255, 0, 0, 255)  # Verde per win, rosso per game over
+        
         # Definisci il font usando ImageFont di Pillow
         try:
             font = ImageFont.truetype("arial.ttf", font_size)
+            small_font = ImageFont.truetype("arial.ttf", 30)
         except IOError:
             font = ImageFont.load_default()
+            small_font = ImageFont.load_default()
+        
         # Calcola le dimensioni del testo
         bbox = font.getbbox(text)
         text_width = bbox[2] - bbox[0]
         text_height = bbox[3] - bbox[1]
         x = 400 - text_width / 2
-        y = 300 - text_height / 2
+        y = 250 - text_height / 2  # Spostato leggermente in alto per fare spazio al punteggio
+        
         # Disegna il testo con ombra per effetto 3D
         shadow_color = (50, 50, 50, 255)
-        main_color = (255, 0, 0, 255)
         offset = 5
         for i in range(10):
             draw.text((x + offset + i, y + offset + i), text, font=font, fill=shadow_color)
         draw.text((x, y), text, font=font, fill=main_color)
+        
+        # Aggiungi il testo del punteggio
+        score_text = f"Punteggio finale: {self.score}"
+        score_bbox = small_font.getbbox(score_text)
+        score_width = score_bbox[2] - score_bbox[0]
+        score_x = 400 - score_width / 2
+        score_y = y + text_height + 30  # Posiziona sotto il testo principale
+        
+        # Disegna il testo del punteggio con ombra
+        for i in range(5):
+            draw.text((score_x + 2 + i, score_y + 2 + i), score_text, font=small_font, fill=shadow_color)
+        draw.text((score_x, score_y), score_text, font=small_font, fill=(255, 255, 255, 255))  # Bianco per il punteggio
+        
         # Applica una lieve sfocatura all'ombra
         image = image.filter(ImageFilter.GaussianBlur(radius=2))
+        
         # Animazione di ridimensionamento e movimento
         frames = 20  # Numero di fotogrammi
         duration = 1000  # Durata totale dell'animazione in millisecondi
@@ -867,11 +892,12 @@ class SpaceShooterGame:
             self.canvas.create_image(400 + dx, 300, image=photo, tags="game_over_image")
             self.canvas.update()
             self.root.after(delay)
+        
         # Mostra l'immagine finale
         self.canvas.delete("game_over_image")
         self.canvas.create_image(400, 300, image=images[-1], tags="game_over_image")
         # Salva l'id dell'after per poterlo annullare se necessario
-        self.game_over_after_id = self.root.after(1000, self.back_to_main_menu)
+        self.game_over_after_id = self.root.after(3000 if win else 1000, self.back_to_main_menu)
 
 def main():
     root = tk.Tk()
