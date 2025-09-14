@@ -18,7 +18,9 @@ class Powerup:
             # Usa l'immagine specifica per il powerup con definizione alta
             image_name = self.get_powerup_image_name()
             if image_name:
-                image = self.game_instance.load_image(image_name, (24, 24))  # Dimensione powerup
+                # Aumenta le dimensioni di 5 volte con definizione grafica alta
+                size = (120, 120) if self.graphics_detail == "high" else (24, 24)
+                image = self.game_instance.load_image(image_name, size)
                 if image:
                     powerup_id = self.canvas.create_image(
                         self.x, self.y, image=image, tags="powerup"
@@ -30,8 +32,10 @@ class Powerup:
                     return powerup_id
         
         # Fallback alla grafica vettoriale
+        # Aumenta le dimensioni di 5 volte con definizione grafica alta
+        radius = 60 if self.graphics_detail == "high" else 10
         return self.canvas.create_oval(
-            self.x - 10, self.y - 10, self.x + 10, self.y + 10,
+            self.x - radius, self.y - radius, self.x + radius, self.y + radius,
             fill=self.color, outline="white", width=2
         )
     

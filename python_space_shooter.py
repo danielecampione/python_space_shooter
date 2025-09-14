@@ -28,12 +28,12 @@ class SpaceShooterGame:
 
         # Stato del gioco
         self.game_running = False
-        self.control_with_mouse = False  # Di default, il controllo è con la tastiera
+        self.control_with_mouse = True  # Di default, il controllo è con il mouse
         self.game_over = False  # Stato per il game over
         self.game_paused = False  # Stato per la pausa
         
         # Opzioni grafiche
-        self.graphics_detail = "low"  # "low" o "high"
+        self.graphics_detail = "high"  # "low" o "high"
         self.loaded_images = {}  # Cache per le immagini caricate
 
         # Variabili per tenere traccia degli eventi after
