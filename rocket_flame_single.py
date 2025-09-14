@@ -17,10 +17,10 @@ class RocketFlame:
         """Crea l'effetto fiammata"""
         if self.graphics_detail == "high" and self.game_instance:
             # Usa l'immagine della fiamma
-            image = self.game_instance.load_image("rocket_flame.png", (20, 30))
+            image = self.game_instance.load_image("rocket_flame.png", (30, 40))
             if image:
                 flame = self.canvas.create_image(
-                    self.x, self.y + 20, image=image, tags="rocket_flame"
+                    self.x, self.y + 10, image=image, tags="rocket_flame"
                 )
                 self.flame_ids.append(flame)
                 # Mantieni un riferimento all'immagine
