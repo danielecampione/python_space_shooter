@@ -75,11 +75,20 @@ class Spaceship:
         return self.x + 25
     
     def get_top_y(self):
-        """Restituisce la coordinata y della parte superiore della navicella"""
+        """Restituisce la coordinata Y della parte superiore della navicella"""
         coords = self.get_coords()
         if coords:
             return coords[1]
-        return self.y - 25
+        return None
+    
+    def get_position(self):
+        """Restituisce la posizione centrale della navicella"""
+        coords = self.get_coords()
+        if coords:
+            center_x = (coords[0] + coords[2]) / 2
+            center_y = (coords[1] + coords[3]) / 2
+            return center_x, center_y
+        return None, None
     
     def flash(self, colors=["orange", "red", "blue"], steps=10, delay=100):
         """Fa lampeggiare la navicella con i colori specificati"""
@@ -97,31 +106,7 @@ class Spaceship:
         
         flash_step()
     
-    def add_rocket_effect(self):
-        """Aggiunge l'effetto fiammata con gradienti"""
-        coords = self.get_coords()
-        if coords:
-            x = coords[0]
-            y = coords[3]
-            flame_colors = ["yellow", "orange", "red"]
-            flames = []
-            for i, color in enumerate(flame_colors):
-                flame = self.canvas.create_polygon(
-                    x + 20, y + 10 + i * 5,
-                    x + 17 - i * 2, y + 25 + i * 5,
-                    x + 33 + i * 2, y + 25 + i * 5,
-                    x + 30, y + 10 + i * 5,
-                    fill=color, outline="", tags="effect"
-                )
-                self.canvas.tag_lower(flame, self.ship_id)
-                flames.append(flame)
-            
-            # Rimuovi le fiamme dopo un breve delay
-            def remove_flames():
-                for flame in flames:
-                    self.canvas.delete(flame)
-            
-            self.canvas.after(100, remove_flames)
+
     
     def delete(self):
         """Elimina la navicella dal canvas"""
