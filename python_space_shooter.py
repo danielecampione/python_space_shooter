@@ -6,6 +6,7 @@ from spaceship import Spaceship
 from projectile import Projectile, DiagonalProjectile
 from asteroid import Asteroid, AsteroidManager
 from starfield import Star, StarField
+from powerup import Powerup, ExtraLifePowerup, DoubleFirePowerup, PowerupManager
 
 # Importa Resampling se la versione di Pillow è 9.1.0 o successiva
 try:
@@ -357,9 +358,9 @@ class SpaceShooterGame:
         # Manager per gli asteroidi
         self.asteroid_manager = AsteroidManager(self.canvas, base_speed=2, max_speed=8)
 
-        # Liste per proiettili, power-up e particelle
+        # Liste per proiettili e particelle, manager per power-up
         self.bullets = []
-        self.power_ups = []
+        self.powerup_manager = PowerupManager(self.canvas)
         self.particles = []
 
         # Etichette per il punteggio e le vite
@@ -474,8 +475,8 @@ class SpaceShooterGame:
         self.move_bullets()
         self.asteroid_manager.spawn_asteroid(self.score)
         self.asteroid_manager.move_all_asteroids()
-        self.spawn_power_up()
-        self.move_power_ups()
+        self.powerup_manager.spawn_powerup()
+        self.powerup_manager.move_all_powerups()
         self.move_particles()
         self.check_collisions()
         self.starfield.update_all_stars()
@@ -493,28 +494,7 @@ class SpaceShooterGame:
 
 
 
-    # Funzione per generare power-up
-    def spawn_power_up(self):
-        if random.randint(1, 500) == 1:
-            x = random.randint(50, 750)
-            power_up_type = random.choice(["extra_life", "double_fire"])
-            if power_up_type == "extra_life":
-                color = "green"
-            else:
-                color = "purple"
-            power_up = self.canvas.create_rectangle(
-                x - 15, -30, x + 15, 0, fill=color, outline="white", tags="power_up"
-            )
-            self.power_ups.append({"id": power_up, "type": power_up_type})
 
-    # Funzione per muovere i power-up
-    def move_power_ups(self):
-        for power_up in self.power_ups[:]:
-            self.canvas.move(power_up["id"], 0, 3)
-            coords = self.canvas.coords(power_up["id"])
-            if not coords or len(coords) < 4 or coords[3] > 600:
-                self.canvas.delete(power_up["id"])
-                self.power_ups.remove(power_up)
 
     # Funzione per creare un effetto particellare migliorato
     def create_explosion(self, x, y, num_particles=50):
@@ -594,15 +574,14 @@ class SpaceShooterGame:
                         self.game_over_screen(win=False)
                     return
         # Collisioni navicella - power-up
-        for power_up in self.power_ups[:]:
-            power_up_coords = self.canvas.coords(power_up["id"])
-            if not power_up_coords or len(power_up_coords) < 4:
+        for powerup in self.powerup_manager.get_powerups()[:]:
+            powerup_coords = powerup.get_coords()
+            if not powerup_coords or len(powerup_coords) < 4:
                 continue
-            if self.check_overlap(ship_coords, power_up_coords):
-                self.canvas.delete(power_up["id"])
-                if power_up in self.power_ups:
-                    self.power_ups.remove(power_up)
-                self.activate_power_up(power_up["type"])
+            if self.check_overlap(ship_coords, powerup_coords):
+                self.powerup_manager.remove_powerup(powerup)
+                self.show_power_up_text(powerup.type)
+                powerup.activate(self)
 
     # Funzione per verificare sovrapposizione
     def check_overlap(self, bbox1, bbox2):
@@ -637,17 +616,7 @@ class SpaceShooterGame:
             if self.power_up_timer <= 0:
                 self.deactivate_power_up()
 
-    # Attivazione del power-up con visualizzazione del nome
-    def activate_power_up(self, power_up_type):
-        # Mostra il nome del power-up al centro dello schermo con effetto fade-in e fade-out
-        self.show_power_up_text(power_up_type)
-        if power_up_type == "extra_life":
-            self.lives += 1
-            self.update_lives()
-        elif power_up_type == "double_fire":
-            self.power_up_active = True
-            self.power_up_type = power_up_type
-            self.power_up_timer = 500  # Durata del power-up
+
 
     # Funzione per mostrare il nome del power-up con effetto animato
     def show_power_up_text(self, power_up_type):
@@ -655,6 +624,8 @@ class SpaceShooterGame:
             text = "Vita Extra!"
         elif power_up_type == "double_fire":
             text = "Doppio Fuoco!"
+        else:
+            text = "Power-up!"
         # Creiamo un gruppo per gestire facilmente gli elementi del testo
         group = []
         # Crea il testo nero per il contorno (più copie leggermente spostate)
@@ -753,9 +724,7 @@ class SpaceShooterGame:
             self.canvas.delete(bullet["id"])
         self.bullets.clear()
         self.asteroid_manager.clear_all_asteroids()
-        for power_up in self.power_ups:
-            self.canvas.delete(power_up["id"])
-        self.power_ups.clear()
+        self.powerup_manager.clear_all_powerups()
         for particle in self.particles:
             self.canvas.delete(particle["id"])
         self.particles.clear()
