@@ -31,7 +31,7 @@ class Asteroid:
                 self.canvas.asteroid_images.append(image)
                 return asteroid_id
         
-        # Fallback alla grafica vettoriale
+        # Fallback alla grafica vettoriale minimale (Molto bassa)
         return self.canvas.create_oval(
             x, y, x + self.size, y + self.size, 
             fill="gray", outline="darkgray", tags="asteroid"

@@ -39,8 +39,9 @@ class I18n:
                 # Menu opzioni grafiche
                 'graphics_options_title': 'Graphics Options',
                 'very_low': 'Very Low',
+                'low': 'Low',
                 'high': 'High',
-                'graphics_desc': 'Very Low: Vector graphics (better performance)\nHigh: PNG images (better quality)',
+                'graphics_desc': 'Very Low: Minimal vector graphics (best performance)\nLow: Enhanced vector graphics (balanced)\nHigh: PNG images (best quality)',
                 
                 # Menu lingua
                 'language_selection': 'Language Selection',
@@ -96,8 +97,9 @@ class I18n:
                 # Menu opzioni grafiche
                 'graphics_options_title': 'Opzioni Grafiche',
                 'very_low': 'Molto basso',
+                'low': 'Bassa',
                 'high': 'Alto',
-                'graphics_desc': 'Molto basso: Grafica vettoriale (prestazioni migliori)\nAlto: Immagini PNG (qualità migliore)',
+                'graphics_desc': 'Molto basso: Grafica vettoriale minimale (prestazioni migliori)\nBassa: Grafica vettoriale migliorata (bilanciata)\nAlto: Immagini PNG (qualità migliore)',
                 
                 # Menu lingua
                 'language_selection': 'Selezione Lingua',
@@ -153,8 +155,9 @@ class I18n:
                 # Menu opzioni grafiche
                 'graphics_options_title': '图形选项',
                 'very_low': '很低',
+                'low': '低',
                 'high': '高',
-                'graphics_desc': '很低：矢量图形（更好的性能）\n高：PNG图像（更好的质量）',
+                'graphics_desc': '很低：极简矢量图形（性能最佳）\n低：增强矢量图形（均衡）\n高：PNG图像（质量最佳）',
                 
                 # Menu lingua
                 'language_selection': '语言选择',

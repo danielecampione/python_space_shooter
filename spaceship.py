@@ -23,7 +23,30 @@ class Spaceship:
                 self.canvas.image_ref = image
                 return ship
         
-        # Fallback alla grafica vettoriale
+        if self.graphics_detail == "low":
+            # Grafica vettoriale migliorata per modalità "Bassa"
+            body_color = "#2b6cb0"
+            outline_color = "#e2e8f0"
+            points = [
+                self.x + 25, self.y - 28,
+                self.x + 18, self.y - 10,
+                self.x + 5,  self.y - 6,
+                self.x,      self.y + 6,
+                self.x + 8,  self.y + 10,
+                self.x + 18, self.y + 8,
+                self.x + 25, self.y + 14,
+                self.x + 32, self.y + 8,
+                self.x + 42, self.y + 10,
+                self.x + 50, self.y + 6,
+                self.x + 45, self.y - 6,
+                self.x + 32, self.y - 10
+            ]
+            ship = self.canvas.create_polygon(
+                points, fill=body_color, outline=outline_color, width=2, tags="ship"
+            )
+            return ship
+        
+        # Fallback alla grafica vettoriale (Molto bassa)
         points = [
             self.x + 25, self.y - 25,  # Punta superiore
             self.x, self.y + 10,       # Base sinistra

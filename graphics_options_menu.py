@@ -19,12 +19,18 @@ class GraphicsOptionsMenu:
         )
         
         # Opzioni di dettaglio
-        detail_y_start = 250
-        detail_y_gap = 60
-        detail_options = [_("very_low"), _("high")]
+        detail_y_start = 240
+        detail_y_gap = 50
+        detail_options = [_("very_low"), _("low"), _("high")]
         
         for index, option in enumerate(detail_options):
-            color = "yellow" if (index == 0 and self.game.graphics_detail == "low") or (index == 1 and self.game.graphics_detail == "high") else "white"
+            current = getattr(self.game, 'graphics_detail', 'high')
+            selected = (
+                (index == 0 and current == "very_low") or
+                (index == 1 and current == "low") or
+                (index == 2 and current == "high")
+            )
+            color = "yellow" if selected else "white"
             self.canvas.create_text(
                 400, detail_y_start + index * detail_y_gap, text=option, font=("Arial", 24),
                 fill=color, tags=f"detail_option_{index}"
@@ -53,15 +59,17 @@ class GraphicsOptionsMenu:
     def set_graphics_detail(self, index):
         """Imposta il livello di dettaglio grafico"""
         if index == 0:
-            self.game.graphics_detail = "low"
+            self.game.graphics_detail = "very_low"
         elif index == 1:
+            self.game.graphics_detail = "low"
+        elif index == 2:
             self.game.graphics_detail = "high"
         self.update_detail_colors()
     
     def update_detail_colors(self):
         """Aggiorna i colori delle opzioni di dettaglio"""
-        for i in range(2):
-            if (i == 0 and self.game.graphics_detail == "low") or (i == 1 and self.game.graphics_detail == "high"):
+        for i in range(3):
+            if (i == 0 and self.game.graphics_detail == "very_low") or (i == 1 and self.game.graphics_detail == "low") or (i == 2 and self.game.graphics_detail == "high"):
                 self.canvas.itemconfig(f"detail_option_{i}", fill="yellow")
             else:
                 self.canvas.itemconfig(f"detail_option_{i}", fill="white")
