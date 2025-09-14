@@ -15,6 +15,7 @@ class SpaceShooterGame:
         self.root = root
         self.root.title("Space Shooter")
         self.root.geometry("800x600")
+        self.root.attributes("-alpha", 0.0)  # Imposta l'opacità iniziale a 0
         self.root.resizable(False, False)
 
         # Stato del gioco
@@ -39,6 +40,15 @@ class SpaceShooterGame:
 
         # Mostra il menù principale
         self.show_main_menu()
+        
+        self.fade_in()
+
+    def fade_in(self, alpha=0.0):
+        if alpha < 1.0:
+            self.root.attributes("-alpha", alpha)
+            self.root.after(50, self.fade_in, alpha + 0.05)  # Incrementa gradualmente l'opacità
+        else:
+            self.root.attributes("-alpha", 1.0)  # Assicura che rimanga completamente visibile
 
     # Funzione per disegnare un gradiente verticale più scuro
     def draw_gradient_background(self):
