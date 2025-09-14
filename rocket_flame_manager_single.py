@@ -1,13 +1,15 @@
 from rocket_flame_single import RocketFlame
 
 class RocketFlameManager:
-    def __init__(self, canvas):
+    def __init__(self, canvas, graphics_detail="low", game_instance=None):
         self.canvas = canvas
         self.flames = []
+        self.graphics_detail = graphics_detail
+        self.game_instance = game_instance
     
     def add_flame(self, x, y):
         """Aggiunge una nuova fiammata alla posizione specificata"""
-        flame = RocketFlame(self.canvas, x, y)
+        flame = RocketFlame(self.canvas, x, y, self.graphics_detail, self.game_instance)
         self.flames.append(flame)
         
         # Programma la rimozione dalla lista dopo la durata della fiammata

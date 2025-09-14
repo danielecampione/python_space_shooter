@@ -2,11 +2,13 @@ import random
 from asteroid import Asteroid
 
 class AsteroidManager:
-    def __init__(self, canvas, base_speed=2, max_speed=8):
+    def __init__(self, canvas, base_speed=2, max_speed=8, graphics_detail="low", game_instance=None):
         self.canvas = canvas
         self.asteroids = []
         self.base_speed = base_speed
         self.max_speed = max_speed
+        self.graphics_detail = graphics_detail
+        self.game_instance = game_instance
     
     def spawn_asteroid(self, score):
         """Genera un nuovo asteroide con difficoltà basata sul punteggio"""
@@ -19,7 +21,7 @@ class AsteroidManager:
             speed = min(self.base_speed * difficulty_factor, self.max_speed)
             direction = random.choice(["straight", "diagonal"])
             
-            asteroid = Asteroid(self.canvas, x, 0, size, speed, direction)
+            asteroid = Asteroid(self.canvas, x, 0, size, speed, direction, self.graphics_detail, self.game_instance)
             self.asteroids.append(asteroid)
     
     def move_all_asteroids(self):

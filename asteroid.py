@@ -2,15 +2,36 @@ import tkinter as tk
 import random
 
 class Asteroid:
-    def __init__(self, canvas, x, y, size, speed, direction):
+    def __init__(self, canvas, x, y, size, speed, direction, graphics_detail="low", game_instance=None):
         self.canvas = canvas
         self.size = size
         self.speed = speed
         self.direction = direction
+        self.graphics_detail = graphics_detail
+        self.game_instance = game_instance
         
         # Crea l'asteroide visuale
-        self.id = self.canvas.create_oval(
-            x, y, x + size, y + size, 
+        self.id = self.create_visual(x, y)
+    
+    def create_visual(self, x, y):
+        """Crea la rappresentazione visiva dell'asteroide"""
+        if self.graphics_detail == "high" and self.game_instance:
+            # Usa l'immagine dell'asteroide
+            image_name = self.game_instance.get_asteroid_image_name(self.size)
+            image = self.game_instance.load_image(image_name, (self.size, self.size))
+            if image:
+                asteroid_id = self.canvas.create_image(
+                    x + self.size/2, y + self.size/2, image=image, tags="asteroid"
+                )
+                # Mantieni un riferimento all'immagine
+                if not hasattr(self.canvas, 'asteroid_images'):
+                    self.canvas.asteroid_images = []
+                self.canvas.asteroid_images.append(image)
+                return asteroid_id
+        
+        # Fallback alla grafica vettoriale
+        return self.canvas.create_oval(
+            x, y, x + self.size, y + self.size, 
             fill="gray", outline="darkgray", tags="asteroid"
         )
     
@@ -26,19 +47,23 @@ class Asteroid:
         """Restituisce le coordinate dell'asteroide"""
         return self.canvas.coords(self.id)
     
+    def get_bbox(self):
+        """Restituisce il bounding box dell'asteroide"""
+        return self.canvas.bbox(self.id)
+    
     def is_out_of_bounds(self):
         """Verifica se l'asteroide è uscito dai limiti dello schermo"""
-        coords = self.get_coords()
-        if not coords or len(coords) < 4:
+        bbox = self.get_bbox()
+        if not bbox or len(bbox) < 4:
             return True
-        return coords[3] > 600 or coords[2] < 0 or coords[0] > 800
+        return bbox[3] > 600 or bbox[2] < 0 or bbox[0] > 800
     
     def get_center(self):
         """Restituisce le coordinate del centro dell'asteroide"""
-        coords = self.get_coords()
-        if coords and len(coords) >= 4:
-            x = (coords[0] + coords[2]) / 2
-            y = (coords[1] + coords[3]) / 2
+        bbox = self.get_bbox()
+        if bbox and len(bbox) >= 4:
+            x = (bbox[0] + bbox[2]) / 2
+            y = (bbox[1] + bbox[3]) / 2
             return x, y
         return None, None
     
