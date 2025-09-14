@@ -22,6 +22,7 @@ class SpaceShooterGame:
         self.game_running = False
         self.control_with_mouse = False  # Di default, il controllo è con la tastiera
         self.game_over = False  # Stato per il game over
+        self.game_paused = False  # Stato per la pausa
 
         # Variabili per tenere traccia degli eventi after
         self.game_loop_after_id = None
@@ -173,7 +174,8 @@ class SpaceShooterGame:
             "Controlli:\n"
             " - Freccia Sinistra: Muovi la navicella a sinistra\n"
             " - Freccia Destra: Muovi la navicella a destra\n"
-            " - Barra Spaziatrice: Spara\n\n"
+            " - Barra Spaziatrice: Spara\n"
+            " - P: Pausa/Riprendi il gioco\n\n"
             "Modalità Mouse Attiva:\n"
             " - Muovi il mouse per muovere la navicella\n"
             " - Clicca con il tasto sinistro per sparare\n\n"
@@ -275,6 +277,42 @@ class SpaceShooterGame:
         else:
             self.remove_checkmark()
 
+    # Funzione per gestire la pausa
+    def toggle_pause(self, event=None):
+        if self.game_running and not self.game_over:
+            self.game_paused = not self.game_paused
+            if self.game_paused:
+                self.show_pause_screen()
+            else:
+                self.hide_pause_screen()
+                self.game_loop()  # Riprendi il ciclo del gioco
+
+    # Funzione per mostrare la schermata di pausa
+    def show_pause_screen(self):
+        # Crea la scritta "PAUSA" con contorno nero
+        self.pause_text_shadow = self.canvas.create_text(
+            402, 302, text="PAUSA", font=("Arial", 60, "bold"),
+            fill="black", tags="pause_screen"
+        )
+        self.pause_text = self.canvas.create_text(
+            400, 300, text="PAUSA", font=("Arial", 60, "bold"),
+            fill="white", tags="pause_screen"
+        )
+        
+        # Istruzioni per riprendere
+        self.pause_instructions_shadow = self.canvas.create_text(
+            402, 372, text="Premi P per riprendere", font=("Arial", 20),
+            fill="black", tags="pause_screen"
+        )
+        self.pause_instructions = self.canvas.create_text(
+            400, 370, text="Premi P per riprendere", font=("Arial", 20),
+            fill="white", tags="pause_screen"
+        )
+
+    # Funzione per nascondere la schermata di pausa
+    def hide_pause_screen(self):
+        self.canvas.delete("pause_screen")
+
     # Funzione per iniziare il gioco
     def start_game(self):
         # Se c'è un eventuale callback pendente del game over, annullalo
@@ -284,6 +322,7 @@ class SpaceShooterGame:
 
         self.game_running = True
         self.game_over = False  # Resetta lo stato di game over
+        self.game_paused = False  # Resetta lo stato di pausa
         self.canvas.delete("all")
         self.draw_gradient_background()
 
@@ -367,6 +406,9 @@ class SpaceShooterGame:
             self.canvas.unbind("<Button-1>")
         # La barra spaziatrice deve funzionare sempre per sparare
         self.root.bind("<space>", self.shoot_bullet)
+        # Tasto P per la pausa
+        self.root.bind("<p>", self.toggle_pause)
+        self.root.bind("<P>", self.toggle_pause)  # Maiuscolo
         # Tasto Esc per tornare al menù
         self.root.bind("<Escape>", self.back_to_main_menu)
 
@@ -384,6 +426,8 @@ class SpaceShooterGame:
 
     # Funzione per aggiungere l'effetto fiammata con gradienti
     def add_rocket_effect(self, x, y):
+        if self.game_paused:
+            return
         flame_colors = ["yellow", "orange", "red"]
         for i, color in enumerate(flame_colors):
             flame = self.canvas.create_polygon(
@@ -398,7 +442,7 @@ class SpaceShooterGame:
 
     # Movimento della navicella a sinistra
     def move_ship_left(self, event):
-        if not self.game_over:
+        if not self.game_over and not self.game_paused:
             coords = self.canvas.coords(self.ship)
             if coords and coords[0] > 0:
                 self.canvas.move(self.ship, -self.ship_speed, 0)
@@ -406,7 +450,7 @@ class SpaceShooterGame:
 
     # Movimento della navicella a destra
     def move_ship_right(self, event):
-        if not self.game_over:
+        if not self.game_over and not self.game_paused:
             coords = self.canvas.coords(self.ship)
             if coords and coords[4] < 800:
                 self.canvas.move(self.ship, self.ship_speed, 0)
@@ -414,7 +458,7 @@ class SpaceShooterGame:
 
     # Movimento della navicella con il mouse
     def move_ship_with_mouse(self, event):
-        if not self.game_over:
+        if not self.game_over and not self.game_paused:
             ship_coords = self.canvas.coords(self.ship)
             if ship_coords:
                 ship_width = ship_coords[4] - ship_coords[0]
@@ -431,12 +475,12 @@ class SpaceShooterGame:
 
     # Funzione per sparare con il mouse in modalità mouse attiva
     def mouse_shoot(self, event):
-        if not self.game_over and self.control_with_mouse:
+        if not self.game_over and not self.game_paused and self.control_with_mouse:
             self.shoot_bullet(event)
 
     # Funzione per sparare un proiettile con scia luminosa
     def shoot_bullet(self, event):
-        if not self.game_over:
+        if not self.game_over and not self.game_paused:
             coords = self.canvas.coords(self.ship)
             center_x = (coords[0] + coords[4]) / 2
             top_y = coords[1]
@@ -457,17 +501,26 @@ class SpaceShooterGame:
                     fill="yellow", width=3, tags="bullet"
                 )
                 self.bullets.append({"id": bullet, "dx": 0})
-            # Aggiungi scia luminosa
+            # Aggiungi scia luminosa con controllo pausa
             trail = self.canvas.create_line(
                 center_x, top_y, center_x, top_y + 10,
                 fill="white", width=2, tags="trail"
             )
-            self.canvas.after(100, lambda: self.canvas.delete(trail))
+            self.delete_trail_after_delay(trail, 100)
+
+    # Nuova funzione helper per gestire la cancellazione delle scie con pausa
+    def delete_trail_after_delay(self, trail, delay):
+        def delete_if_not_paused():
+            if not self.game_paused:
+                self.canvas.delete(trail)
+            else:
+                self.root.after(50, delete_if_not_paused)
+        self.root.after(delay, delete_if_not_paused)
 
     # Ciclo principale del gioco
     def game_loop(self):
-        if self.game_over:
-            return  # Interrompe il ciclo se il gioco è finito
+        if self.game_over or self.game_paused:
+            return  # Interrompe il ciclo se il gioco è finito o in pausa
         self.move_bullets()
         self.spawn_asteroids()
         self.move_asteroids()
@@ -636,7 +689,7 @@ class SpaceShooterGame:
                     bbox1[3] < bbox2[1] or
                     bbox1[1] > bbox2[3])
 
-    # Funzione per lampeggiare la navicella senza congelare il gioco
+    # Funzione per fare lampeggiare la navicella senza congelare il gioco
     def flash_ship(self):
         if self.game_over:
             return
@@ -646,10 +699,14 @@ class SpaceShooterGame:
 
         def flash():
             if self.flash_index < self.flash_steps and not self.game_over:
-                color = colors[self.flash_index % len(colors)]
-                self.canvas.itemconfig(self.ship, fill=color)
-                self.flash_index += 1
-                self.root.after(100, flash)
+                if not self.game_paused:  # Controllo pausa aggiunto
+                    color = colors[self.flash_index % len(colors)]
+                    self.canvas.itemconfig(self.ship, fill=color)
+                    self.flash_index += 1
+                    self.root.after(100, flash)
+                else:
+                    # Se in pausa, riprova dopo un breve delay
+                    self.root.after(50, flash)
             else:
                 self.canvas.itemconfig(self.ship, fill="blue")
 
@@ -729,21 +786,26 @@ class SpaceShooterGame:
     # Funzione per l'effetto fade-in e fade-out del testo
     def fade_in_out(self, items, steps=10, stay_time=500):
         def fade_in(step):
-            if step <= steps:
+            if not self.game_paused and step <= steps:  # Controllo pausa
                 alpha = int(255 * (step / steps))
                 color = f"#{alpha:02x}{alpha:02x}{alpha:02x}"
                 for item in items:
                     self.canvas.itemconfig(item, fill=color)
                 self.root.after(50, fade_in, step + 1)
+            elif self.game_paused:
+                self.root.after(50, fade_in, step)  # Sospende l'animazione
             else:
                 self.root.after(stay_time, fade_out, steps)
+                
         def fade_out(step):
-            if step >= 0:
+            if not self.game_paused and step >= 0:  # Controllo pausa
                 alpha = int(255 * (step / steps))
                 color = f"#{alpha:02x}{alpha:02x}{alpha:02x}"
                 for item in items:
                     self.canvas.itemconfig(item, fill=color)
                 self.root.after(50, fade_out, step - 1)
+            elif self.game_paused:
+                self.root.after(50, fade_out, step)  # Sospende l'animazione
             else:
                 for item in items:
                     self.canvas.delete(item)
