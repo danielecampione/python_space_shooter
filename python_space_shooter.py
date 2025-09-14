@@ -375,12 +375,22 @@ class SpaceShooterGame:
 
     def get_asteroid_image_name(self, size):
         """Restituisce il nome dell'immagine dell'asteroide in base alla dimensione"""
-        if size <= 30:
-            return "asteroid_01.png"  # Piccolo
-        elif size <= 50:
-            return "asteroid_02.png"  # Medio
+        if self.graphics_detail == "high":
+            # Con definizione alta, aumentiamo le soglie per usare tutte e tre le immagini
+            if size <= 35:
+                return "asteroid_01.png"  # Piccolo
+            elif size <= 42:
+                return "asteroid_02.png"  # Medio
+            else:
+                return "asteroid_03.png"  # Grande
         else:
-            return "asteroid_03.png"  # Grande
+            # Con definizione bassa, manteniamo le soglie originali
+            if size <= 30:
+                return "asteroid_01.png"  # Piccolo
+            elif size <= 50:
+                return "asteroid_02.png"  # Medio
+            else:
+                return "asteroid_03.png"  # Grande
 
     # Funzione per gestire la pausa
     def toggle_pause(self, event=None):
@@ -460,7 +470,7 @@ class SpaceShooterGame:
 
         # Liste per proiettili e particelle, manager per power-up e fiammate
         self.bullets = []
-        self.powerup_manager = PowerupManager(self.canvas)
+        self.powerup_manager = PowerupManager(self.canvas, graphics_detail=self.graphics_detail, game_instance=self)
         self.rocket_flame_manager = RocketFlameManager(self.canvas, graphics_detail=self.graphics_detail, game_instance=self)
         self.particles = []
 

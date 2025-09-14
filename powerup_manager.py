@@ -3,11 +3,13 @@ from extra_life_powerup import ExtraLifePowerup
 from double_fire_powerup import DoubleFirePowerup
 
 class PowerupManager:
-    def __init__(self, canvas):
+    def __init__(self, canvas, graphics_detail="low", game_instance=None):
         self.canvas = canvas
         self.powerups = []
         self.spawn_timer = 0
         self.spawn_interval = 600  # 20 secondi a 30 FPS
+        self.graphics_detail = graphics_detail
+        self.game_instance = game_instance
     
     def spawn_powerup(self):
         """Genera un nuovo power-up casualmente"""
@@ -19,9 +21,9 @@ class PowerupManager:
             
             # Scegli casualmente il tipo di power-up
             if random.choice([True, False]):
-                powerup = ExtraLifePowerup(self.canvas, x, y)
+                powerup = ExtraLifePowerup(self.canvas, x, y, self.graphics_detail, self.game_instance)
             else:
-                powerup = DoubleFirePowerup(self.canvas, x, y)
+                powerup = DoubleFirePowerup(self.canvas, x, y, self.graphics_detail, self.game_instance)
             
             self.powerups.append(powerup)
     
