@@ -1,1 +1,8 @@
 * text eol=lf
+# Tratta tutte le immagini come binarie, senza conversioni
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.bmp binary
+*.svg binary
