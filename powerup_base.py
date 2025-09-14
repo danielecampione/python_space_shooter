@@ -33,16 +33,58 @@ class Powerup:
         
         # Fallback alla grafica vettoriale
         if self.graphics_detail == "low":
-            # Disegno migliorato per ciascun powerup - forma a cuore per entrambi i powerup
-            path = [
-                self.x, self.y + 8,
-                self.x - 10, self.y - 4,
-                self.x - 6, self.y - 12,
-                self.x, self.y - 6,
-                self.x + 6, self.y - 12,
-                self.x + 10, self.y - 4
-            ]
-            return self.canvas.create_polygon(path, fill=self.color, outline="white", width=2, smooth=True, tags="powerup")
+            # Disegno migliorato specifico per ciascun powerup
+            if self.powerup_type == "double_fire":
+                # Icona doppio proiettile per "Doppio Fuoco"
+                powerup_ids = []
+                
+                # Sfondo circolare
+                bg_circle = self.canvas.create_oval(
+                    self.x - 12, self.y - 12, self.x + 12, self.y + 12,
+                    fill="#FF4500", outline="#FFD700", width=2, tags="powerup"
+                )
+                powerup_ids.append(bg_circle)
+                
+                # Due proiettili diagonali stilizzati
+                # Proiettile sinistro
+                left_projectile = self.canvas.create_line(
+                    self.x - 6, self.y + 4, self.x - 2, self.y - 6,
+                    fill="#FFFF00", width=3, tags="powerup"
+                )
+                powerup_ids.append(left_projectile)
+                
+                # Proiettile destro
+                right_projectile = self.canvas.create_line(
+                    self.x + 2, self.y - 6, self.x + 6, self.y + 4,
+                    fill="#FFFF00", width=3, tags="powerup"
+                )
+                powerup_ids.append(right_projectile)
+                
+                # Effetti scintilla alle punte
+                left_spark = self.canvas.create_oval(
+                    self.x - 3, self.y - 7, self.x - 1, self.y - 5,
+                    fill="#FFFFFF", outline="", tags="powerup"
+                )
+                powerup_ids.append(left_spark)
+                
+                right_spark = self.canvas.create_oval(
+                    self.x + 1, self.y - 7, self.x + 3, self.y - 5,
+                    fill="#FFFFFF", outline="", tags="powerup"
+                )
+                powerup_ids.append(right_spark)
+                
+                return bg_circle  # Restituisce l'ID principale per il tracking
+            else:
+                # Forma a cuore per "Vita Extra"
+                path = [
+                    self.x, self.y + 8,
+                    self.x - 10, self.y - 4,
+                    self.x - 6, self.y - 12,
+                    self.x, self.y - 6,
+                    self.x + 6, self.y - 12,
+                    self.x + 10, self.y - 4
+                ]
+                return self.canvas.create_polygon(path, fill=self.color, outline="white", width=2, smooth=True, tags="powerup")
         
         # Modalità molto bassa: semplice cerchio
         radius = 10

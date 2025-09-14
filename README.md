@@ -1,7 +1,13 @@
-# python_space_shooter
+# Python Space Shooter
 A GUI application (a game) in Python 3.  
 
-## Microsoft Windows 11/10
+![Png](https://i.ibb.co/GQjJTFQ7/Immagine-2025-08-12-000139.png)
+
+---
+
+## 💻 Requirements Installation
+
+### Microsoft Windows 11/10  
 Install Python 3.13 by executing "python-3.13.0-amd64.exe" in Microsoft Windows.  
   
 Library for creating the applications with a GUI: Pillow.  
@@ -13,9 +19,21 @@ Command to execute in the terminal to install the Pillow library:
 pip install pillow-11.0.0-cp313-cp313-win_amd64.whl
 ```
 
-![Png](https://i.ibb.co/GQjJTFQ7/Immagine-2025-08-12-000139.png)
+Open the terminal (PowerShell or CMD) in the project folder and run:
 
-## deepin (linux, Debian)
+```
+pip install -r requirements.txt
+```
+
+Make sure Python 3 is installed and `pip` is in your PATH.  
+If you have multiple Python versions:
+
+```
+pip3 install -r requirements.txt
+```
+---
+
+### deepin (linux, Debian)
 
 ```
 sudo apt-get update
@@ -46,8 +64,9 @@ sudo pip3 install Pillow
 
 python3 python_space_shooter.py
 ```
+---
 
-## Debian 12 (linux)
+### Debian 12 (linux)
 
 ```
 sudo apt-get update
