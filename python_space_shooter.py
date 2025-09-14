@@ -10,6 +10,41 @@ try:
 except ImportError:
     RESAMPLE_FILTER = Image.LANCZOS  # Per le versioni precedenti
 
+# Classe base per i proiettili
+class Projectile:
+    def __init__(self, canvas, x, y, dx=0, speed=15):
+        self.canvas = canvas
+        self.x = x
+        self.y = y
+        self.dx = dx  # Movimento orizzontale
+        self.speed = speed
+        self.id = self.create_visual()
+    
+    def create_visual(self):
+        """Crea la rappresentazione visiva del proiettile"""
+        return self.canvas.create_line(
+            self.x, self.y, self.x, self.y - 20,
+            fill="yellow", width=3, tags="bullet"
+        )
+    
+    def get_id(self):
+        """Restituisce l'ID del proiettile"""
+        return self.id
+
+# Classe per proiettili diagonali (doppio fuoco)
+class DiagonalProjectile(Projectile):
+    def __init__(self, canvas, x, y, angle_offset, speed=15):
+        self.angle_offset = angle_offset
+        super().__init__(canvas, x, y, angle_offset / 10, speed)
+    
+    def create_visual(self):
+        """Crea la rappresentazione visiva del proiettile diagonale"""
+        return self.canvas.create_line(
+            self.x, self.y,
+            self.x + self.angle_offset, self.y - 20,
+            fill="yellow", width=3, tags="bullet"
+        )
+
 class SpaceShooterGame:
     def __init__(self, root):
         self.root = root
@@ -488,19 +523,12 @@ class SpaceShooterGame:
                 # Spara due proiettili diagonali
                 angle_offsets = [-10, 10]
                 for offset in angle_offsets:
-                    bullet = self.canvas.create_line(
-                        center_x, top_y,
-                        center_x + offset, top_y - 20,
-                        fill="yellow", width=3, tags="bullet"
-                    )
-                    self.bullets.append({"id": bullet, "dx": offset / 10})
+                    projectile = DiagonalProjectile(self.canvas, center_x, top_y, offset, self.bullet_speed)
+                    self.bullets.append({"id": projectile.get_id(), "dx": offset / 10})
             else:
                 # Spara un proiettile dritto
-                bullet = self.canvas.create_line(
-                    center_x, top_y, center_x, top_y - 20,
-                    fill="yellow", width=3, tags="bullet"
-                )
-                self.bullets.append({"id": bullet, "dx": 0})
+                projectile = Projectile(self.canvas, center_x, top_y, 0, self.bullet_speed)
+                self.bullets.append({"id": projectile.get_id(), "dx": 0})
             # Aggiungi scia luminosa con controllo pausa
             trail = self.canvas.create_line(
                 center_x, top_y, center_x, top_y + 10,
