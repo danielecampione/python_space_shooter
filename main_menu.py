@@ -1,5 +1,6 @@
 import tkinter as tk
 from menu_item import MenuItem
+from i18n import i18n, _
 
 class MainMenu:
     def __init__(self, canvas, root, game_instance):
@@ -12,11 +13,12 @@ class MainMenu:
         
         # Definizione delle opzioni del menù
         self.menu_options = [
-            MenuItem("Inizia Partita", self.start_game),
-            MenuItem("Istruzioni", self.show_instructions),
-            MenuItem("Comandi", self.show_commands),
-            MenuItem("Opzioni grafiche", self.show_graphics_options),
-            MenuItem("Esci", self.exit_game)
+            MenuItem(_("start_game"), self.start_game),
+            MenuItem(_("instructions"), self.show_instructions),
+            MenuItem(_("commands"), self.show_commands),
+            MenuItem(_("graphics_options"), self.show_graphics_options),
+            MenuItem(_("language"), self.show_language_menu),
+            MenuItem(_("exit"), self.exit_game)
         ]
     
     def show(self):
@@ -27,7 +29,7 @@ class MainMenu:
         
         # Titolo del gioco con font divertente
         self.canvas.create_text(
-            400, 150, text="★ Space Shooter ★", font=("Comic Sans MS", 50, "bold"), fill="white"
+            400, 150, text=_("game_title"), font=("Comic Sans MS", 50, "bold"), fill="white"
         )
         
         # Posizioni delle opzioni di menù
@@ -39,6 +41,9 @@ class MainMenu:
             300, menu_y_start + self.selected_option * menu_y_gap, text="➤", font=("Arial", 24),
             fill="yellow", anchor="e"
         )
+        
+        # Aggiorna le opzioni del menù con le traduzioni correnti
+        self.update_menu_options()
         
         # Crea le opzioni del menù
         self.menu_items = []
@@ -143,6 +148,24 @@ class MainMenu:
             self.game.graphics_menu.show()
         else:
             self.game.show_graphics_options()
+    
+    def show_language_menu(self):
+        """Mostra il menu di selezione della lingua"""
+        if hasattr(self.game, 'language_menu'):
+            self.game.language_menu.show()
+        else:
+            self.game.show_language_menu()
+    
+    def update_menu_options(self):
+        """Aggiorna le opzioni del menù con le traduzioni correnti"""
+        self.menu_options = [
+            MenuItem(_("start_game"), self.start_game),
+            MenuItem(_("instructions"), self.show_instructions),
+            MenuItem(_("commands"), self.show_commands),
+            MenuItem(_("graphics_options"), self.show_graphics_options),
+            MenuItem(_("language"), self.show_language_menu),
+            MenuItem(_("exit"), self.exit_game)
+        ]
     
     def exit_game(self):
         """Esce dal gioco"""
