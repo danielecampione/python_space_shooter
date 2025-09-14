@@ -253,6 +253,8 @@ class SpaceShooterGame:
         self.power_up_active = False
         self.power_up_type = None
         self.power_up_timer = 0
+        self.game_start_time = None
+        self.game_time_elapsed = 0
 
         # Crea la navicella
         self.ship = Spaceship(self.canvas, 375, 550, speed=self.ship_speed, graphics_detail=self.graphics_detail, game_instance=self)
@@ -364,6 +366,21 @@ class SpaceShooterGame:
     def game_loop(self):
         if self.game_over or self.game_paused:
             return  # Interrompe il ciclo se il gioco è finito o in pausa
+        
+        # Inizializza il timer di gioco al primo ciclo
+        if self.game_start_time is None:
+            import time
+            self.game_start_time = time.time()
+        
+        # Calcola il tempo trascorso
+        import time
+        self.game_time_elapsed = time.time() - self.game_start_time
+        
+        # Controlla se sono passati 90 secondi (1 minuto e 30 secondi)
+        if self.game_time_elapsed >= 90 and not self.game_over:
+            self.game_over_screen(win=True)
+            return
+        
         self.move_bullets()
         self.asteroid_manager.spawn_asteroid(self.score)
         self.asteroid_manager.move_all_asteroids()
@@ -445,9 +462,6 @@ class SpaceShooterGame:
                     self.destroy_asteroid(asteroid)
                     self.score += 1
                     self.update_score()
-                    # Controlla se il punteggio ha raggiunto 500
-                    if self.score >= 500 and not self.game_over:
-                        self.game_over_screen(win=True)
                     break
         # Collisioni navicella - asteroidi
         for asteroid in self.asteroid_manager.get_asteroids()[:]:
