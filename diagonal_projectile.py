@@ -8,11 +8,27 @@ class DiagonalProjectile(Projectile):
     
     def create_visual(self):
         """Crea la rappresentazione visiva del proiettile diagonale"""
-        # Usa la stessa grafica semplice per tutti i livelli per evitare bug della scia
-        bullet_id = self.canvas.create_line(
-            self.x, self.y,
-            self.x + self.angle_offset, self.y - 20,
-            fill="yellow", width=3, tags="bullet"
-        )
-        self.visual_elements.append(bullet_id)
-        return bullet_id
+        if self.graphics_detail == "very_low":
+            # Grafica molto bassa: linea semplice
+            return self.canvas.create_line(
+                self.x, self.y, self.x, self.y - 10, fill="yellow", width=2
+            )
+        elif self.graphics_detail == "low":
+            # Grafica bassa: linea spessa e luminosa
+            return self.canvas.create_line(
+                self.x, self.y, self.x, self.y - 12, 
+                fill="#ffff00", width=3, capstyle="round"
+            )
+        else:  # high
+            # Grafica alta: linea con nucleo luminoso
+            main_id = self.canvas.create_line(
+                self.x, self.y, self.x, self.y - 15,
+                fill="#ffffff", width=4, capstyle="round"
+            )
+            # Nucleo interno
+            core_id = self.canvas.create_line(
+                self.x, self.y, self.x, self.y - 15,
+                fill="#ffff00", width=2, capstyle="round"
+            )
+            self.visual_elements.extend([main_id, core_id])
+            return main_id

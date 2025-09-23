@@ -39,8 +39,15 @@ class SpaceShooterGame:
         self.game_paused = False  # Stato per la pausa
         
         # Opzioni grafiche
-        self.graphics_detail = "high"  # "low" o "high"
+        self.graphics_detail = "high"  # "very_low", "low" o "high"
         self.loaded_images = {}  # Cache per le immagini caricate
+        
+        # Sistema di tracciamento per effetti speciali
+        self.recent_kills = []  # Lista dei timestamp delle uccisioni recenti
+        self.screen_shake_active = False
+        self.screen_shake_intensity = 0
+        self.screen_shake_duration = 0
+        self.original_canvas_position = (0, 0)
 
         # Variabili per tenere traccia degli eventi after
         self.game_loop_after_id = None
@@ -49,6 +56,9 @@ class SpaceShooterGame:
         # Canvas per il gioco
         self.canvas = tk.Canvas(self.root, width=800, height=600)
         self.canvas.pack()
+        
+        # Salva la posizione originale del canvas per l'effetto vibrazione
+        self.original_canvas_position = (0, 0)
 
         # Disegna sfondo con gradiente
         self.draw_gradient_background()
@@ -380,6 +390,11 @@ class SpaceShooterGame:
         self.powerup_manager.spawn_powerup()
         self.powerup_manager.move_all_powerups()
         self.move_particles()
+        
+        # Applica effetto vibrazione se attivo
+        if self.screen_shake_active:
+            self.apply_screen_shake()
+        
         self.check_collisions()
         self.starfield.update_stars()
         self.update_power_up()
@@ -388,7 +403,21 @@ class SpaceShooterGame:
     # Funzione per muovere i proiettili
     def move_bullets(self):
         for bullet in self.bullets[:]:
-            self.canvas.move(bullet["id"], bullet["dx"], -self.bullet_speed)
+            # Aggiorna la posizione del proiettile
+            if "projectile_obj" in bullet:
+                # Calcola nuova posizione
+                new_x = bullet["projectile_obj"].x + bullet["dx"]
+                new_y = bullet["projectile_obj"].y - self.bullet_speed
+                
+                # Aggiorna la posizione del proiettile (gestisce automaticamente la scia)
+                bullet["projectile_obj"].update_position(new_x, new_y)
+                
+                # Muovi l'elemento grafico principale
+                self.canvas.move(bullet["id"], bullet["dx"], -self.bullet_speed)
+            else:
+                # Fallback per proiettili senza oggetto
+                self.canvas.move(bullet["id"], bullet["dx"], -self.bullet_speed)
+            
             bbox = self.canvas.bbox(bullet["id"])
             if not bbox or len(bbox) < 4 or bbox[1] < 0 or bbox[0] < 0 or bbox[2] > 800:
                 # Usa il metodo destroy del proiettile se disponibile
@@ -404,37 +433,205 @@ class SpaceShooterGame:
 
     # Funzione per creare un effetto particellare migliorato
     def create_explosion(self, x, y, num_particles=50):
-        colors = ["#fffae3", "#ffc857", "#ff6b35", "#d7263d", "#a20021"]
-        for _ in range(num_particles):
-            angle = random.uniform(0, 2 * math.pi)
-            speed = random.uniform(2, 7)
-            dx = math.cos(angle) * speed
-            dy = math.sin(angle) * speed
-            size = random.randint(2, 5)
-            color = random.choice(colors)
-            particle = {
-                "id": self.canvas.create_oval(
-                    x, y, x + size, y + size, fill=color, outline=""
-                ),
-                "dx": dx,
-                "dy": dy,
-                "life": random.randint(30, 60)
-            }
-            self.particles.append(particle)
+        if self.graphics_detail == "very_low":
+            # Esplosione semplice per grafica molto bassa
+            colors = ["#fffae3", "#ffc857", "#ff6b35", "#d7263d", "#a20021"]
+            for _ in range(num_particles):
+                angle = random.uniform(0, 2 * math.pi)
+                speed = random.uniform(2, 7)
+                dx = math.cos(angle) * speed
+                dy = math.sin(angle) * speed
+                size = random.randint(2, 5)
+                color = random.choice(colors)
+                particle = {
+                    "id": self.canvas.create_oval(
+                        x, y, x + size, y + size, fill=color, outline=""
+                    ),
+                    "dx": dx,
+                    "dy": dy,
+                    "life": random.randint(30, 60),
+                    "type": "simple"
+                }
+                self.particles.append(particle)
+        
+        elif self.graphics_detail == "low":
+            # Esplosione migliorata per grafica bassa
+            colors = ["#fffae3", "#ffc857", "#ff6b35", "#d7263d", "#a20021", "#ffffff"]
+            
+            # Particelle principali
+            for _ in range(num_particles):
+                angle = random.uniform(0, 2 * math.pi)
+                speed = random.uniform(3, 9)
+                dx = math.cos(angle) * speed
+                dy = math.sin(angle) * speed
+                size = random.randint(2, 6)
+                color = random.choice(colors)
+                particle = {
+                    "id": self.canvas.create_oval(
+                        x, y, x + size, y + size, fill=color, outline=""
+                    ),
+                    "dx": dx,
+                    "dy": dy,
+                    "life": random.randint(40, 80),
+                    "type": "enhanced",
+                    "size": size
+                }
+                self.particles.append(particle)
+            
+            # Scintille aggiuntive
+            for _ in range(int(num_particles * 0.3)):
+                angle = random.uniform(0, 2 * math.pi)
+                speed = random.uniform(5, 12)
+                dx = math.cos(angle) * speed
+                dy = math.sin(angle) * speed
+                spark = {
+                    "id": self.canvas.create_line(
+                        x, y, x + dx/2, y + dy/2, fill="#ffffff", width=2
+                    ),
+                    "dx": dx,
+                    "dy": dy,
+                    "life": random.randint(15, 30),
+                    "type": "spark"
+                }
+                self.particles.append(spark)
+        
+        else:  # high
+            # Esplosione spettacolare per grafica alta
+            colors = ["#fffae3", "#ffc857", "#ff6b35", "#d7263d", "#a20021", "#ffffff", "#ffff88"]
+            
+            # Particelle principali con effetti
+            for _ in range(num_particles):
+                angle = random.uniform(0, 2 * math.pi)
+                speed = random.uniform(3, 10)
+                dx = math.cos(angle) * speed
+                dy = math.sin(angle) * speed
+                size = random.randint(3, 8)
+                color = random.choice(colors)
+                
+                # Particella principale
+                particle = {
+                    "id": self.canvas.create_oval(
+                        x, y, x + size, y + size, fill=color, outline=""
+                    ),
+                    "dx": dx,
+                    "dy": dy,
+                    "life": random.randint(50, 100),
+                    "type": "premium",
+                    "size": size,
+                    "color": color
+                }
+                self.particles.append(particle)
+                
+                # Alone luminoso
+                if random.random() < 0.4:
+                    glow = {
+                        "id": self.canvas.create_oval(
+                            x - 2, y - 2, x + size + 2, y + size + 2, 
+                            fill="", outline="#ffff88", width=1
+                        ),
+                        "dx": dx * 0.8,
+                        "dy": dy * 0.8,
+                        "life": random.randint(30, 60),
+                        "type": "glow"
+                    }
+                    self.particles.append(glow)
+            
+            # Scintille multiple
+            for _ in range(int(num_particles * 0.5)):
+                angle = random.uniform(0, 2 * math.pi)
+                speed = random.uniform(6, 15)
+                dx = math.cos(angle) * speed
+                dy = math.sin(angle) * speed
+                spark = {
+                    "id": self.canvas.create_line(
+                        x, y, x + dx/3, y + dy/3, fill="#ffffff", width=3
+                    ),
+                    "dx": dx,
+                    "dy": dy,
+                    "life": random.randint(20, 40),
+                    "type": "premium_spark"
+                }
+                self.particles.append(spark)
+            
+            # Onda d'urto
+            if random.random() < 0.7:
+                shockwave = {
+                    "id": self.canvas.create_oval(
+                        x - 5, y - 5, x + 5, y + 5, 
+                        fill="", outline="#ffffff", width=2
+                    ),
+                    "dx": 0,
+                    "dy": 0,
+                    "life": 20,
+                    "type": "shockwave",
+                    "radius": 5
+                }
+                self.particles.append(shockwave)
 
     # Funzione per muovere le particelle
     def move_particles(self):
         for particle in self.particles[:]:
-            self.canvas.move(particle["id"], particle["dx"], particle["dy"])
+            particle_type = particle.get("type", "simple")
+            
+            if particle_type == "shockwave":
+                # Gestione onda d'urto
+                particle["radius"] += 3
+                new_size = particle["radius"]
+                coords = self.canvas.coords(particle["id"])
+                if coords:
+                    center_x = (coords[0] + coords[2]) / 2
+                    center_y = (coords[1] + coords[3]) / 2
+                    self.canvas.coords(particle["id"], 
+                                     center_x - new_size, center_y - new_size,
+                                     center_x + new_size, center_y + new_size)
+                    # Cambia colore basato sulla vita rimanente
+                    life_ratio = particle["life"] / 20
+                    if life_ratio < 0.3:
+                        self.canvas.itemconfig(particle["id"], outline="#cccccc")
+                    elif life_ratio < 0.6:
+                        self.canvas.itemconfig(particle["id"], outline="#eeeeee")
+                    else:
+                        self.canvas.itemconfig(particle["id"], outline="#ffffff")
+            else:
+                # Movimento normale per altre particelle
+                self.canvas.move(particle["id"], particle["dx"], particle["dy"])
+                
+                # Applica gravità e attrito per particelle avanzate
+                if particle_type in ["enhanced", "premium"]:
+                    particle["dy"] += 0.1  # Gravità
+                    particle["dx"] *= 0.98  # Attrito
+                    particle["dy"] *= 0.98
+            
             particle["life"] -= 1
             if particle["life"] <= 0:
                 self.canvas.delete(particle["id"])
                 self.particles.remove(particle)
             else:
-                # Effetto dissolvenza
-                alpha = int(255 * (particle["life"] / 60))
-                fill = self.canvas.itemcget(particle["id"], "fill")
-                self.canvas.itemconfig(particle["id"], fill=fill, stipple="gray50")
+                # Effetti di dissolvenza migliorati
+                if particle_type == "simple":
+                    # Effetto dissolvenza semplice
+                    alpha = int(255 * (particle["life"] / 60))
+                    fill = self.canvas.itemcget(particle["id"], "fill")
+                    self.canvas.itemconfig(particle["id"], fill=fill, stipple="gray50")
+                elif particle_type in ["enhanced", "premium"]:
+                    # Effetto dissolvenza avanzato con cambio colore
+                    life_ratio = particle["life"] / 100 if particle_type == "premium" else particle["life"] / 80
+                    if life_ratio < 0.3:
+                        # Diventa più scuro verso la fine
+                        self.canvas.itemconfig(particle["id"], fill="#660000")
+                elif particle_type in ["spark", "premium_spark"]:
+                    # Le scintille diventano più sottili
+                    life_ratio = particle["life"] / 30 if particle_type == "spark" else particle["life"] / 40
+                    new_width = max(1, int(3 * life_ratio)) if particle_type == "premium_spark" else max(1, int(2 * life_ratio))
+                    self.canvas.itemconfig(particle["id"], width=new_width)
+                elif particle_type == "glow":
+                    # L'alone si dissolve gradualmente
+                    life_ratio = particle["life"] / 60
+                    if life_ratio < 0.3:
+                        # Cambia colore quando si dissolve
+                        self.canvas.itemconfig(particle["id"], outline="#ffaa44")
+                    else:
+                        self.canvas.itemconfig(particle["id"], outline="#ffff88")
 
     # Funzione per controllare le collisioni
     def check_collisions(self):
@@ -588,10 +785,66 @@ class SpaceShooterGame:
     # Funzione per distruggere un asteroide con effetto esplosione
     def destroy_asteroid(self, asteroid):
         x, y, size = self.asteroid_manager.destroy_asteroid(asteroid)
-        # Calcola il numero di particelle in base alla dimensione dell'asteroide
-        num_particles = int(size * 0.8)  # Numero proporzionale alla dimensione
+        
+        # Traccia l'uccisione per l'effetto vibrazione
+        self.track_kill()
+        
+        # Calcola il numero di particelle in base alla dimensione dell'asteroide e al livello grafico
+        if self.graphics_detail == "very_low":
+            num_particles = int(size * 0.8)  # Numero base
+        elif self.graphics_detail == "low":
+            num_particles = int(size * 1.2)  # Più particelle
+        else:  # high
+            num_particles = int(size * 1.5)  # Ancora più particelle
+        
         self.create_explosion(x, y, num_particles)
 
+    def track_kill(self):
+        """Traccia le uccisioni per attivare effetti speciali"""
+        import time
+        current_time = time.time()
+        
+        # Aggiungi il timestamp corrente
+        self.recent_kills.append(current_time)
+        
+        # Rimuovi le uccisioni più vecchie di 3 secondi
+        self.recent_kills = [t for t in self.recent_kills if current_time - t <= 3.0]
+        
+        # Se abbiamo 10 o più uccisioni negli ultimi 3 secondi, attiva la vibrazione
+        if len(self.recent_kills) >= 10 and self.graphics_detail in ["low", "high"]:
+            self.start_screen_shake()
+    
+    def start_screen_shake(self):
+        """Avvia l'effetto vibrazione schermo"""
+        if not self.screen_shake_active:
+            self.screen_shake_active = True
+            self.screen_shake_intensity = 8 if self.graphics_detail == "high" else 5
+            self.screen_shake_duration = 30  # Frame di durata
+            self.apply_screen_shake()
+    
+    def apply_screen_shake(self):
+        """Applica l'effetto vibrazione schermo"""
+        if self.screen_shake_active and self.screen_shake_duration > 0:
+            # Calcola offset casuali
+            offset_x = random.randint(-self.screen_shake_intensity, self.screen_shake_intensity)
+            offset_y = random.randint(-self.screen_shake_intensity, self.screen_shake_intensity)
+            
+            # Applica l'offset a tutti gli elementi del canvas
+            self.canvas.configure(scrollregion=f"{offset_x} {offset_y} {800+offset_x} {600+offset_y}")
+            
+            # Riduci intensità e durata
+            self.screen_shake_duration -= 1
+            if self.screen_shake_duration <= 0:
+                self.stop_screen_shake()
+            else:
+                # Riduci gradualmente l'intensità
+                self.screen_shake_intensity = max(1, int(self.screen_shake_intensity * 0.9))
+    
+    def stop_screen_shake(self):
+        """Ferma l'effetto vibrazione schermo"""
+        self.screen_shake_active = False
+        self.canvas.configure(scrollregion="0 0 800 600")
+    
     # Funzione per mostrare lo schermo di Game Over con animazione 3D
     def game_over_screen(self, win=False):
         if self.game_over:  # Se il game over è già attivo, esci
