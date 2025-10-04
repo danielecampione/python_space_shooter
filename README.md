@@ -1,5 +1,5 @@
 # Python Space Shooter
-A GUI application (a game) in Python 3.  
+A fast‑paced Python 3 space shooter: steer your spaceship through dangerous obstacles and partial walls, destroy incoming asteroids, and collect power‑ups like extra life and double fire. Includes adjustable graphics settings (Very Low, Low, High) for different performance levels.
 
 ![Png](https://i.ibb.co/GQjJTFQ7/Immagine-2025-08-12-000139.png)
 
