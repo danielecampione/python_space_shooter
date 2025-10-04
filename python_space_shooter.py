@@ -10,6 +10,7 @@ from asteroid_manager import AsteroidManager
 from star_field import StarField
 from powerup_manager import PowerupManager
 from rocket_flame_manager_single import RocketFlameManager
+from wall_manager import WallManager
 from main_menu import MainMenu
 from instructions_menu import InstructionsMenu
 from commands_menu import CommandsMenu
@@ -283,6 +284,9 @@ class SpaceShooterGame:
 
         # Sfondo stellato con stelle scintillanti
         self.starfield = StarField(self.canvas, num_stars=100)
+        
+        # Manager per i muri
+        self.wall_manager = WallManager(self.canvas, screen_width=800, screen_height=600, graphics_detail=self.graphics_detail)
 
         # Associazione dei controlli
         self.bind_game_controls()
@@ -390,6 +394,11 @@ class SpaceShooterGame:
         self.powerup_manager.spawn_powerup()
         self.powerup_manager.move_all_powerups()
         self.move_particles()
+        
+        # Aggiorna i muri
+        game_progress = min(100, (self.game_time_elapsed / 90) * 100)  # Progresso in percentuale
+        asteroid_count = len(self.asteroid_manager.asteroids)
+        self.wall_manager.update(game_progress, asteroid_count)
         
         # Applica effetto vibrazione se attivo
         if self.screen_shake_active:
@@ -685,6 +694,30 @@ class SpaceShooterGame:
             if self.check_overlap(ship_coords, powerup_coords):
                 self.powerup_manager.remove_powerup(powerup)
                 powerup.activate(self)
+        
+        # Collisioni navicella - muri
+        if self.wall_manager.check_collision_with_spaceship(ship_coords):
+            self.lives -= 1
+            self.update_lives()
+            self.flash_ship()
+            if self.lives <= 0:
+                if not self.game_over:
+                    self.game_over_screen(win=False)
+                return
+        
+        # Collisioni proiettili - muri
+        for bullet in self.bullets[:]:
+            bullet_coords = self.canvas.bbox(bullet["id"])
+            if not bullet_coords or len(bullet_coords) < 4:
+                continue
+            if self.wall_manager.check_collision_with_bullet(bullet_coords):
+                # Usa il metodo destroy del proiettile se disponibile
+                if "projectile_obj" in bullet:
+                    bullet["projectile_obj"].destroy()
+                else:
+                    self.canvas.delete(bullet["id"])
+                if bullet in self.bullets:
+                    self.bullets.remove(bullet)
 
     # Funzione per verificare sovrapposizione
     def check_overlap(self, bbox1, bbox2):
@@ -889,6 +922,7 @@ class SpaceShooterGame:
         self.asteroid_manager.clear_all_asteroids()
         self.powerup_manager.clear_all_powerups()
         self.rocket_flame_manager.clear_all_flames()
+        self.wall_manager.reset()
         for particle in self.particles:
             self.canvas.delete(particle["id"])
         self.particles.clear()
