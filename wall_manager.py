@@ -26,13 +26,13 @@ class WallManager:
             
             self.wall_spawn_timer += 1
             
-            # Spawna il primo muro quando il gioco è al 30% di progresso
-            if self.walls_spawned == 0 and game_progress >= 30:
+            # Spawna il primo muro quando il gioco è al 20% di progresso
+            if self.walls_spawned == 0 and game_progress >= 20:
                 self.spawn_wall()
             
-            # Spawna il secondo muro quando il gioco è al 60% di progresso
+            # Spawna il secondo muro quando il gioco è al 45% di progresso
             elif (self.walls_spawned == 1 and 
-                  game_progress >= 60 and 
+                  game_progress >= 45 and 
                   self.wall_spawn_timer >= self.wall_spawn_interval):
                 self.spawn_wall()
         
