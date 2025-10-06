@@ -32,6 +32,16 @@ class MainMenu:
             400, 150, text=_("game_title"), font=("Comic Sans MS", 50, "bold"), fill="white"
         )
         
+        # Sottotitolo per il supporto caffè
+        coffee_text_id = self.canvas.create_text(
+            400, 200, text=_("coffee_support"), font=("Arial", 14), fill="white"
+        )
+        
+        # Rende il testo del caffè cliccabile
+        self.canvas.tag_bind(coffee_text_id, "<Button-1>", self.open_coffee_link)
+        self.canvas.tag_bind(coffee_text_id, "<Enter>", lambda e: self.canvas.itemconfig(coffee_text_id, fill="cyan"))
+        self.canvas.tag_bind(coffee_text_id, "<Leave>", lambda e: self.canvas.itemconfig(coffee_text_id, fill="white"))
+        
         # Posizioni delle opzioni di menù
         menu_y_start = 300
         menu_y_gap = 48
@@ -166,6 +176,11 @@ class MainMenu:
             MenuItem(_("language"), self.show_language_menu),
             MenuItem(_("exit"), self.exit_game)
         ]
+    
+    def open_coffee_link(self, event=None):
+        """Apre il link per il supporto caffè nel browser predefinito"""
+        import webbrowser
+        webbrowser.open("https://buymeacoffee.com/daniele.campione")
     
     def exit_game(self):
         """Esce dal gioco"""

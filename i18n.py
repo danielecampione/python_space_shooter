@@ -8,6 +8,7 @@ class I18n:
             'en': {
                 # Menu principale
                 'game_title': '★ Space Shooter ★',
+                'coffee_support': 'Buy me a coffee to support my work: https://buymeacoffee.com/daniele.campione',
                 'start_game': 'Start Game',
                 'instructions': 'Instructions',
                 'commands': 'Commands',
@@ -66,10 +67,11 @@ class I18n:
             'it': {
                 # Menu principale
                 'game_title': '★ Space Shooter ★',
-                'start_game': 'Inizia Partita',
+                'coffee_support': 'Offrimi un caffè per supportare il mio lavoro: https://buymeacoffee.com/daniele.campione',
+                'start_game': 'Inizia Gioco',
                 'instructions': 'Istruzioni',
                 'commands': 'Comandi',
-                'graphics_options': 'Opzioni grafiche',
+                'graphics_options': 'Opzioni Grafiche',
                 'language': 'Lingua',
                 'exit': 'Esci',
                 
@@ -124,6 +126,7 @@ class I18n:
             'zh': {
                 # Menu principale
                 'game_title': '★ 太空射击 ★',
+                'coffee_support': '请我喝咖啡支持我的工作: https://buymeacoffee.com/daniele.campione',
                 'start_game': '开始游戏',
                 'instructions': '游戏说明',
                 'commands': '控制设置',
